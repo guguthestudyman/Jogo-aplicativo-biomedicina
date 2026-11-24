@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'estudo-biomedico-v10';
+const CACHE_NAME = 'estudo-biomedico-v11';
 const APP_SHELL = [
   './',
   './index.html',

@@ -1620,6 +1620,7 @@
       if (invitedRoom && /^[A-Za-z0-9]{6}$/.test(invitedRoom)) {
         roomInput.value = invitedRoom.toUpperCase();
         dialog.showModal();
+      document.getElementById('online-join-room').click();
     }
     }
   let lastOnlineUiUpdate = 0;

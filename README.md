@@ -39,7 +39,7 @@ O modo online usa canais públicos do Supabase Realtime; não requer tabelas nem
 1. Crie um projeto em [supabase.com](https://supabase.com/) e copie a **Project URL** e a chave pública **publishable** (`sb_publishable_...`) em **Project Settings → API Keys**.
 2. No arquivo `multiplayer-config.js`, preencha `supabaseUrl` e `supabasePublishableKey` com esses dois valores.
 3. Publique os arquivos atualizados no GitHub Pages. O jogo online não funciona pelo endereço `localhost` para amigos em outras redes; use o endereço público HTTPS do Pages.
-4. No jogo, abra **Cooperativo online → Conectar → Criar sala e convidar** e envie o link copiado ao seu amigo. Ele abre o link e entra na sala. O primeiro jogador é o anfitrião/macrófago; os próximos recebem neutrófilo e linhagem B.
+4. No jogo, abra **Cooperativo online → Conectar → Criar sala e convidar** e envie o link copiado ao seu amigo. Abrir o convite tenta conectar automaticamente; se ele recebeu apenas o código, deve digitá-lo e tocar em **Entrar**. A sala é pública para qualquer pessoa com link/código enquanto o anfitrião permanecer conectado. O primeiro jogador é o anfitrião/macrófago; os próximos recebem neutrófilo e linhagem B.
 
 A chave pública fica visível no aplicativo publicado e isso é esperado; **nunca** coloque a chave `service_role` ou outra chave secreta em `multiplayer-config.js`. A sala usa um código aleatório, mas qualquer pessoa com o link/código pode entrar. O anfitrião precisa manter o jogo aberto e conectado: se sair, a simulação dos convidados pausa. O cliente Supabase JavaScript é carregado de `esm.sh` quando alguém tenta criar ou entrar em uma sala; portanto, o modo online exige internet mesmo que a interface principal já esteja armazenada para uso offline.
 
