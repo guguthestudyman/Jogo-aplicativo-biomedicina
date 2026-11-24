@@ -1,0 +1,2452 @@
+(() => {
+  'use strict';
+
+  const levels = [
+    { name: 'Pulmão', short: 'Pulmão', scale: '10⁰', category: 'ANATOMIA · ESCALA 1', subtitle: 'Da arquitetura pulmonar à resposta imune celular', title: 'Pulmão' },
+    { name: 'Lóbulo', short: 'Lóbulo', scale: '10⁻¹', category: 'ANATOMIA · ESCALA 2', subtitle: 'Unidade funcional delimitada por septos conjuntivos', title: 'Lóbulo pulmonar' },
+    { name: 'Bronquíolo', short: 'Bronquíolo', scale: '10⁻²', category: 'ANATOMIA · ESCALA 3', subtitle: 'Ramificação que conduz o ar até os alvéolos', title: 'Bronquíolo' },
+    { name: 'Alvéolo', short: 'Alvéolo', scale: '10⁻³', category: 'MICROANATOMIA · ESCALA 4', subtitle: 'Interface entre o ar e a rede capilar', title: 'Alvéolo pulmonar' },
+    { name: 'Macrófago', short: 'Macrófago', scale: '10⁻⁴', category: 'IMUNOLOGIA · ESCALA 5', subtitle: 'Sentinela imune residente no espaço alveolar', title: 'Macrófago alveolar' },
+    { name: 'Núcleo', short: 'Núcleo', scale: '10⁻⁵', category: 'CITOLOGIA · ESCALA 6', subtitle: 'Compartimento que organiza a informação celular', title: 'Núcleo do macrófago' },
+    { name: 'Fagossomo', short: 'Fagossomo', scale: '10⁻⁶', category: 'CITOLOGIA · ESCALA 7', subtitle: 'Vesícula formada durante a internalização do microrganismo', title: 'Fagossomo' },
+    { name: 'Fagolisossomo', short: 'Fagolisossomo', scale: '10⁻⁷', category: 'CITOLOGIA · ESCALA 8', subtitle: 'Compartimento digestivo após fusão fagossomo–lisossomo', title: 'Fagolisossomo' },
+    { name: 'M. tuberculosis', short: 'M. tuberculosis', scale: '10⁻⁸', category: 'MICROBIOLOGIA · ESCALA 9', subtitle: 'Bacilo complexo: envelope, metabolismo e fatores de virulência', title: 'Mycobacterium tuberculosis' },
+    { name: 'Parede celular', short: 'Parede celular', scale: '10⁻⁹', category: 'MICROBIOLOGIA · ESCALA 10', subtitle: 'Envelope rico em lipídios com propriedades de barreira', title: 'Parede celular micobacteriana' },
+    { name: 'Citoplasma', short: 'Citoplasma', scale: '10⁻¹⁰', category: 'MICROBIOLOGIA · ESCALA 11', subtitle: 'Espaço intracelular com ribossomos e maquinaria metabólica', title: 'Citoplasma bacteriano' },
+    { name: 'DNA', short: 'DNA', scale: '10⁻¹¹', category: 'GENÉTICA · ESCALA 12', subtitle: 'Informação genética organizada no nucleoide bacteriano', title: 'DNA bacteriano' },
+    { name: 'Genes', short: 'Genes', scale: '10⁻¹²', category: 'GENÉTICA · ESCALA 13', subtitle: 'Regiões genéticas associadas a funções distintas', title: 'Genes de virulência e resistência' }
+  ];
+
+  const concepts = {
+    scene: {
+      icon: '◉', title: null,
+      description: 'Explore a defesa pulmonar em diferentes escalas. A navegação conecta a anatomia do órgão aos processos celulares e às estruturas de Mycobacterium tuberculosis.',
+      focusTitle: 'Uma jornada entre escalas',
+      focusText: 'A resposta à infecção emerge da interação entre barreiras do hospedeiro, células imunes e características do patógeno.',
+      tags: ['pulmão', 'macrófago', 'M. tuberculosis']
+    },
+    pathway: {
+      icon: '⌁', title: 'Via imune',
+      description: 'Uma rota didática conecta o reconhecimento microbiano a mecanismos antimicrobianos. TLR2 pode sinalizar por MyD88 e contribuir para a ativação de NF-κB.',
+      focusTitle: 'Do reconhecimento ao peptídeo',
+      focusText: 'Em contextos apropriados, a sinalização e a vitamina D podem favorecer a expressão de CYP27B1, VDR e CAMP. O gene CAMP codifica o precursor da catelicidina LL-37.',
+      tags: ['TLR2', 'MyD88', 'NF-κB', 'CYP27B1', 'VDR', 'CAMP', 'LL-37']
+    },
+    antigen: {
+      icon: '◈', title: 'Apresentação antigênica',
+      description: 'Após processamento de material internalizado, peptídeos podem ser carregados em moléculas de MHC-II e apresentados na superfície para reconhecimento por linfócitos T CD4⁺.',
+      focusTitle: 'Fagocitose → MHC-II',
+      focusText: 'Endossomos e compartimentos acidificados processam proteínas. Complexos peptídeo–MHC-II trafegam até a membrana; o reconhecimento por T CD4⁺ depende de coestimulação e do contexto imunológico.',
+      tags: ['endossomo', 'peptídeo', 'MHC-II', 'T CD4⁺']
+    },
+    phage: {
+      icon: '✳', title: 'Fago & CRISPR tipo III-A',
+      description: 'Este módulo apresenta uma analogia visual e conceitual entre interação fago–bactéria e sistemas CRISPR. Não descreve protocolo, desempenho ou precisão experimental.',
+      focusTitle: 'Memória e interferência — em conceito',
+      focusText: 'Em alguns sistemas tipo III-A, um complexo guiado por RNA reconhece transcritos correspondentes e pode desencadear interferência dependente de transcrição. A resposta varia entre sistemas e contextos.',
+      tags: ['fago', 'RNA guia', 'complexo Csm', 'interferência']
+    }
+  };
+
+  const levelNotes = [
+    'O pulmão contém uma árvore de vias aéreas e milhões de alvéolos envolvidos nas trocas gasosas.',
+    'Cada lóbulo reúne bronquíolos e unidades alveolares irrigadas por uma rede vascular.',
+    'Bronquíolos conduzem o ar; não possuem cartilagem e se ramificam em vias menores.',
+    'A parede alveolar fina aproxima o ar inspirado dos capilares sanguíneos.',
+    'Macrófagos alveolares fagocitam partículas e microrganismos. Seu núcleo, RER, REL, complexo de Golgi, lisossomos, endossomos, autofagossomos, proteassomas, mitocôndrias e citoesqueleto apoiam funções celulares distintas.',
+    'O núcleo contém o genoma do hospedeiro e regula programas de expressão gênica.',
+    'A fagocitose envolve a partícula em uma vesícula intracelular: o fagossomo.',
+    'A maturação e fusão com compartimentos lisossomais favorecem acidificação e degradação; M. tuberculosis pode interferir nessa trajetória.',
+    'M. tuberculosis é um bacilo ácido-resistente cujo envelope complexo contribui para interação e persistência no hospedeiro.',
+    'O envelope inclui arabinogalactana, peptidoglicano, lipoarabinomanana (LAM) e ácidos micólicos; ESX-1 secreta proteínas como ESAT-6 e CFP-10.',
+    'O citoplasma abriga ribossomos, enzimas e componentes metabólicos necessários à vida bacteriana.',
+    'O cromossomo bacteriano contém genes que codificam proteínas e RNAs, organizado sem núcleo membranoso.',
+    'esxA e esxB codificam ESAT-6 e CFP-10, componentes associados ao sistema ESX-1. katG participa da ativação da isoniazida; inhA, rpoB e embB codificam alvos ou componentes associados a fármacos. Variantes nesses genes podem estar relacionadas à resistência, mas não determinam isoladamente o perfil clínico.'
+  ];
+
+  const featureTags = [
+    ['vias aéreas', 'alvéolos', 'capilares'],
+    ['septos', 'bronquíolos', 'alvéolos'],
+    ['epitélio', 'músculo liso', 'muco'],
+    ['pneumócito I', 'pneumócito II', 'surfactante'],
+    ['núcleo', 'RER', 'REL', 'Golgi', 'lisossomos', 'endossomos', 'autofagossomos', 'proteassomas', 'mitocôndrias', 'citoesqueleto'],
+    ['DNA', 'cromatina', 'transcrição'],
+    ['membrana', 'maturação', 'antígeno'],
+    ['acidificação', 'proteases', 'MHC-II'],
+    ['LAM', 'ESX-1', 'ácidos micólicos'],
+    ['LAM', 'ESX-1', 'ESAT-6', 'CFP-10', 'ácidos micólicos'],
+    ['ribossomos', 'enzimas', 'metabolismo'],
+    ['nucleoide', 'DNA', 'genes'],
+    ['esxA', 'esxB', 'katG', 'inhA', 'rpoB', 'embB']
+  ];
+
+  const pathwayLabels = ['TLR2', 'MyD88', 'NF-κB', 'CYP27B1', 'VDR', 'CAMP', 'LL-37'];
+  const pathwayDescriptions = [
+    'Reconhecer sinais microbianos',
+    'Adaptador de sinalização',
+    'Regulação de genes de resposta',
+    'Metabolismo local da vitamina D',
+    'Receptor nuclear de vitamina D',
+    'Expressão do precursor da catelicidina',
+    'Peptídeo antimicrobiano efetor'
+  ];
+  const infectionViews = [
+    { id: 'alveolus', label: 'Alvéolo', title: 'Patrulha alveolar', description: 'Encontre bacilos livres no espaço alveolar e aproxime o macrófago para internalizá-los.' },
+    { id: 'phagosome', label: 'Fagossomo', title: 'Bacilo no fagossomo', description: 'Observe o tráfego do bacilo entre compartimentos e a possível ruptura fagossomal, representados de modo esquemático.' },
+    { id: 'host-cytosol', label: 'Citosol', title: 'Bacilo no citosol do macrófago', description: 'O escape do fagossomo associado a ESX-1 e a mobilidade intracelular são representações didáticas, não motilidade flagelar.' },
+    { id: 'wall', label: 'Parede', title: 'Parede bacteriana', description: 'LL-37 e os pontos de permeabilização são desenhados como uma hipótese visual, não como resultado garantido em M. tuberculosis.' },
+    { id: 'cytoplasm', label: 'Citoplasma', title: 'Citoplasma bacteriano', description: 'Os elementos fágicos no citoplasma são uma metáfora visual: partículas fágicas não são mostradas como virions livres em biologia real.' },
+    { id: 'phagolysosome', label: 'Fagolisossomo', title: 'Fagolisossomo', description: 'A etapa final representa maturação e degradação conceituais após a ativação dos requisitos definidos pelo cenário.' },
+    { id: 'granuloma', label: 'Granuloma', title: 'Organização do granuloma', description: 'Veja uma organização celular esquemática; granulomas podem conter bacilos ou também favorecer sua persistência.' }
+  ];
+  const initialBacteriaCount = 18;
+  const maxMacrophages = 10;
+  const maxNeutrophils = 6;
+  const maxPlasmaCells = 6;
+  const conceptualPhageCount = 1000;
+  const cytokineModules = [
+    { name: 'IL-1β', role: 'Inflamação local', active: false },
+    { name: 'TNF', role: 'Ativa endótelio', active: false },
+    { name: 'CXCL8', role: 'Quimioatrai neutrófilos', active: false },
+    { name: 'IL-6', role: 'Ativa resposta sistêmica', active: false },
+    { name: 'IL-12', role: 'Ajuda ativação de T helper', active: false }
+  ];
+  const macrophageDefenses = [
+    { id: 'ifng', name: 'IFN-γ · JAK/STAT1', short: 'IFN-γ', role: 'Licenciamento transcricional dependente do contexto', active: false },
+    { id: 'acidification', name: 'V-ATPase · acidificação', short: 'pH lisossomal', role: 'Acidificação e entrega de hidrolases ao compartimento', active: false },
+    { id: 'lap', name: 'LAP · LC3 no fagossomo', short: 'LAP', role: 'Fagocitose associada a LC3; não confundir com autofagia canônica', active: false },
+    { id: 'xenophagy', name: 'Xenofagia seletiva', short: 'Xenofagia', role: 'Reconhecimento de material microbiano exposto e direcionamento ao autofagossomo', active: false },
+    { id: 'ros', name: 'NOX2 · ROS', short: 'NOX2 / ROS', role: 'Estresse oxidativo no fagossomo; atividade variável e combatida pelo patógeno', active: false },
+    { id: 'rns', name: 'iNOS · RNS', short: 'iNOS / RNS', role: 'Espécies reativas de nitrogênio; relevância depende de espécie e contexto', active: false },
+    { id: 'cgas', name: 'cGAS–STING', short: 'cGAS–STING', role: 'Sensoriamento de DNA citosólico e sinalização de interferons tipo I', active: false },
+    { id: 'inflammasome', name: 'NLRP3 · caspase-1', short: 'NLRP3', role: 'Processamento de IL-1β/IL-18 e inflamação; não é uma via bactericida direta', active: false }
+  ];
+  const sceneCanvas = document.getElementById('scene-canvas');
+  const overlayCanvas = document.getElementById('overlay-canvas');
+  const gl = sceneCanvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false, preserveDrawingBuffer: true });
+  const ctx = overlayCanvas.getContext('2d');
+  const minimap = document.getElementById('minimap');
+  const mapCtx = minimap.getContext('2d');
+  const levelTrack = document.getElementById('hierarchy-track');
+  const toast = document.getElementById('toast');
+  const state = {
+    level: 0,
+    topic: 'scene',
+    particles: true,
+    paused: false,
+    keys: new Set(),
+    joy: { x: 0, y: 0 },
+    navVelocity: { x: 0, y: 0 },
+    camera: { x: 0, y: 0 },
+    particleItems: [],
+    pathwayActive: Array(pathwayLabels.length).fill(false),
+    patrol: {
+      active: false, running: false, initialized: false, complete: false,
+      bacteria: [], phagosomes: [], macrophages: [], granulomas: [],
+      defenseUnits: [], helperT: [], bCells: [], neutrophils: [],
+      plasmaCells: [], antibodies: [], complement: [], nets: [], deaths: [],
+      spreadSites: [], spreadTimer: 0, lysisCount: 0,
+      nextNetId: 1,
+      cleared: 0, phageTherapy: false, infectionView: 'alveolus', toastTimer: 0,
+      playerCount: 1, activePlayer: 0,
+      cytokines: cytokineModules.map(module => ({ ...module })),
+      defenses: macrophageDefenses.map(module => ({ ...module })),
+      playerRoles: ['Macrófago', 'Neutrófilo', 'Lin. B']
+    },
+    mapVisible: true,
+    toastTimer: 0
+  };
+  if (!gl) {
+    document.getElementById('scene-title').textContent = 'WebGL indisponível';
+    document.getElementById('scene-subtitle').textContent = 'Ative WebGL no navegador para explorar a visualização.';
+    throw new Error('Este navegador não disponibiliza WebGL.');
+  }
+
+  const vertexSource = `
+    attribute vec2 a_position;
+    attribute vec4 a_color;
+    uniform vec2 u_resolution;
+    varying vec4 v_color;
+    void main() {
+      vec2 clip = (a_position / u_resolution) * 2.0 - 1.0;
+      gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+      v_color = a_color;
+    }`;
+  const fragmentSource = `
+    precision mediump float;
+    varying vec4 v_color;
+    void main() { gl_FragColor = v_color; }`;
+
+  function makeShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const error = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      throw new Error(`Falha ao compilar shader: ${error}`);
+    }
+    return shader;
+  }
+  const program = gl.createProgram();
+  gl.attachShader(program, makeShader(gl.VERTEX_SHADER, vertexSource));
+  gl.attachShader(program, makeShader(gl.FRAGMENT_SHADER, fragmentSource));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(`Falha ao vincular programa WebGL: ${gl.getProgramInfoLog(program)}`);
+  const positionBuffer = gl.createBuffer();
+  const colorBuffer = gl.createBuffer();
+  const positionLocation = gl.getAttribLocation(program, 'a_position');
+  const colorLocation = gl.getAttribLocation(program, 'a_color');
+  const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+  const colorValues = {
+    air: [0.12, 0.42, 0.47, 0.92], airLight: [0.27, 0.64, 0.63, 0.72],
+    tissue: [0.28, 0.56, 0.52, 0.8], tissueLight: [0.51, 0.77, 0.68, 0.72],
+    capillary: [0.73, 0.34, 0.39, 0.78], cell: [0.21, 0.59, 0.49, 0.78],
+    cellLight: [0.38, 0.77, 0.61, 0.84], nucleus: [0.31, 0.42, 0.76, 0.92],
+    nucleusLight: [0.54, 0.62, 0.89, 0.88], vesicle: [0.78, 0.62, 0.32, 0.8],
+    vesicleLight: [0.91, 0.75, 0.44, 0.9], bacteria: [0.9, 0.57, 0.3, 0.96],
+    bacteriaDark: [0.63, 0.31, 0.22, 0.96], dna: [0.53, 0.75, 0.93, 0.94],
+    purple: [0.64, 0.48, 0.77, 0.9], white: [0.69, 0.83, 0.82, 0.6],
+    dark: [0.06, 0.16, 0.19, 0.97], glow: [0.16, 0.48, 0.43, 0.25]
+  };
+  let shapeVertices = [];
+
+  function pushTriangle(a, b, c, color) {
+    const rgba = colorValues[color] || color;
+    shapeVertices.push(a[0], a[1], rgba[0], rgba[1], rgba[2], rgba[3],
+      b[0], b[1], rgba[0], rgba[1], rgba[2], rgba[3],
+      c[0], c[1], rgba[0], rgba[1], rgba[2], rgba[3]);
+  }
+  function circle(x, y, radius, color, segments) {
+    const n = segments || 40;
+    const center = [x, y];
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2;
+      const b = (i + 1) / n * Math.PI * 2;
+      pushTriangle(center, [x + Math.cos(a) * radius, y + Math.sin(a) * radius],
+        [x + Math.cos(b) * radius, y + Math.sin(b) * radius], color);
+    }
+  }
+  function ring(x, y, outer, inner, color, segments) {
+    const n = segments || 56;
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2;
+      const b = (i + 1) / n * Math.PI * 2;
+      const a0 = [x + Math.cos(a) * outer, y + Math.sin(a) * outer];
+      const b0 = [x + Math.cos(b) * outer, y + Math.sin(b) * outer];
+      const a1 = [x + Math.cos(a) * inner, y + Math.sin(a) * inner];
+      const b1 = [x + Math.cos(b) * inner, y + Math.sin(b) * inner];
+      pushTriangle(a0, b0, a1, color);
+      pushTriangle(b0, b1, a1, color);
+    }
+  }
+  function filledPolygon(points, color) {
+    const center = points.reduce((sum, point) => [sum[0] + point[0] / points.length, sum[1] + point[1] / points.length], [0, 0]);
+    for (let i = 0; i < points.length; i++) {
+      pushTriangle(center, points[i], points[(i + 1) % points.length], color);
+    }
+  }
+  function drawLung(cx, cy, scale, side) {
+    const centerX = cx + side * scale * .17;
+    const centerY = cy + scale * .07;
+    const outline = [];
+    for (let i = 0; i < 72; i++) {
+      const angle = i / 72 * Math.PI * 2;
+      const vertical = Math.sin(angle);
+      const horizontal = Math.cos(angle);
+      const taper = vertical < 0 ? .78 + .22 * (vertical + 1) : 1;
+      const medial = horizontal * side < -.58 ? 1 - .12 * ((-horizontal * side - .58) / .42) : 1;
+      const x = centerX + horizontal * scale * .175 * taper * medial;
+      const y = centerY + vertical * scale * .305;
+      outline.push([x, y]);
+    }
+    filledPolygon(outline, 'tissueLight');
+    const inner = outline.map(([x, y]) => [centerX + (x - centerX) * .94, centerY + (y - centerY) * .97]);
+    filledPolygon(inner, 'tissue');
+  }
+  function drawAlveolarCluster(cx, cy, scale) {
+    circle(cx, cy, scale * .33, 'air', 72);
+    const sacs = [
+      [-.14, -.19], [0, -.21], [.14, -.18],
+      [-.22, -.04], [-.07, -.06], [.09, -.04], [.23, -.02],
+      [-.18, .12], [-.02, .13], [.15, .12], [0, .25]
+    ];
+    sacs.forEach(([offsetX, offsetY], index) => {
+      const x = cx + offsetX * scale;
+      const y = cy + offsetY * scale;
+      const radius = scale * (.085 + (index % 3) * .004);
+      circle(x, y, radius, 'tissueLight', 36);
+      circle(x, y, radius * .84, 'airLight', 34);
+      ring(x, y, radius, radius * .94, 'capillary', 36);
+      if (index % 2 === 0) {
+        circle(x + radius * .72, y - radius * .24, radius * .19, 'vesicleLight', 12);
+        circle(x + radius * .72, y - radius * .24, radius * .1, 'vesicle', 10);
+        for (let granule = 0; granule < 3; granule++) {
+          circle(x + radius * (.86 + granule * .09), y - radius * (.27 - granule * .11), radius * .035, 'white', 7);
+        }
+      }
+      if (index % 3 === 1) circle(x - radius * .73, y + radius * .23, radius * .065, 'nucleus', 8);
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const angle = i * Math.PI * 2 / 10;
+      const x1 = cx + Math.cos(angle) * scale * .12;
+      const y1 = cy + Math.sin(angle) * scale * .12;
+      const x2 = cx + Math.cos(angle + .72) * scale * .25;
+      const y2 = cy + Math.sin(angle + .72) * scale * .25;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      capsule((x1 + x2) / 2, (y1 + y2) / 2, Math.hypot(dx, dy), scale * .0035, 'capillary', Math.atan2(dy, dx));
+      circle(x2, y2, scale * .006, 'nucleus', 8);
+    }
+
+    circle(cx + scale * .025, cy + scale * .045, scale * .037, 'cell', 28);
+    ring(cx + scale * .025, cy + scale * .045, scale * .037, scale * .032, 'cellLight', 24);
+    circle(cx + scale * .015, cy + scale * .043, scale * .012, 'nucleus', 14);
+    for (let i = 0; i < 4; i++) {
+      const angle = i * Math.PI / 2 + .4;
+      circle(cx + scale * .025 + Math.cos(angle) * scale * .021,
+        cy + scale * .045 + Math.sin(angle) * scale * .021, scale * .004, 'vesicleLight', 7);
+    }
+  }
+  function capsule(x, y, length, radius, color, angleValue) {
+    const angle = typeof angleValue === 'number' ? angleValue : -0.22;
+    const ux = Math.cos(angle) * length / 2;
+    const uy = Math.sin(angle) * length / 2;
+    const px = -Math.sin(angle) * radius;
+    const py = Math.cos(angle) * radius;
+    const a = [x - ux + px, y - uy + py];
+    const b = [x + ux + px, y + uy + py];
+    const c = [x + ux - px, y + uy - py];
+    const d = [x - ux - px, y - uy - py];
+    pushTriangle(a, b, c, color);
+    pushTriangle(a, c, d, color);
+    circle(x - ux, y - uy, radius, color, 18);
+    circle(x + ux, y + uy, radius, color, 18);
+  }
+  function drawBacteria(x, y, size) {
+    capsule(x, y, size * 2.4, size * .82, 'bacteria');
+    capsule(x, y, size * 1.9, size * .32, 'bacteriaDark');
+    circle(x - size * .4, y - size * .1, size * .16, 'vesicleLight', 12);
+  }
+  function drawVesselLine(x, y, length, thickness, color) {
+    const points = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      points.push([x + (t - .5) * length, y + Math.sin(t * Math.PI * 3) * thickness * 1.4]);
+    }
+    const c = colorValues[color];
+    ctx.save();
+    ctx.strokeStyle = `rgba(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${c[3]})`;
+    ctx.lineWidth = thickness;
+    ctx.beginPath();
+    points.forEach((point, index) => index ? ctx.lineTo(point[0], point[1]) : ctx.moveTo(point[0], point[1]));
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawPatrolMacrophage(x, y, radius, phase, phagosomes, progress, defenses, damage, mitosisProgress) {
+    const contained = phagosomes.filter(item => item.location !== 'cytosol');
+    const cytosolic = phagosomes.filter(item => item.location === 'cytosol');
+    const phagosomeCount = contained.length;
+    circle(x, y, radius, 'cell', 44);
+    for (let i = 0; i < 7; i++) {
+      const angle = i * Math.PI * 2 / 7 + phase;
+      circle(x + Math.cos(angle) * radius * .78, y + Math.sin(angle) * radius * .78, radius * .28, 'cell', 18);
+    }
+    ring(x, y, radius, radius * .91, 'cellLight', 44);
+    if (typeof mitosisProgress === 'number') {
+      const furrow = Math.sin(mitosisProgress * Math.PI);
+      capsule(x, y, radius * (.15 + furrow * 1.15), radius * (.025 + furrow * .035), 'purple', Math.PI / 2);
+    }
+    circle(x - radius * .22, y + radius * .08, radius * .34, 'nucleus', 24);
+    circle(x - radius * .29, y + radius * .03, radius * .17, 'nucleusLight', 18);
+    ring(x - radius * .22, y + radius * .08, radius * .38, radius * .34, 'purple', 24);
+    for (let i = 0; i < 4; i++) {
+      const angle = i * 1.3;
+      circle(x + Math.cos(angle) * radius * .54, y + Math.sin(angle) * radius * .52, radius * .075, i % 2 ? 'vesicleLight' : 'vesicle', 10);
+    }
+    capsule(x + radius * .38, y - radius * .22, radius * .32, radius * .09, 'vesicle');
+    capsule(x + radius * .38, y - radius * .22, radius * .2, radius * .035, 'vesicleLight');
+    const phagosomeOffsets = [[.2, -.42], [.58, .12], [-.02, .55], [-.54, -.28]];
+    for (let i = 0; i < Math.min(phagosomeCount, phagosomeOffsets.length); i++) {
+      const px = x + radius * phagosomeOffsets[i][0];
+      const py = y + radius * phagosomeOffsets[i][1];
+      circle(px, py, radius * .19, 'vesicle', 16);
+      ring(px, py, radius * .19, radius * .16, 'vesicleLight', 16);
+      if (defenses && defenses.some(module => module.id === 'lap' && module.active)) {
+        ring(px, py, radius * .23, radius * .21, 'dna', 18);
+      }
+      if (defenses && defenses.some(module => module.id === 'acidification' && module.active)) {
+        for (let granule = 0; granule < 3; granule++) {
+          circle(px + (granule - 1) * radius * .04, py + radius * .03, radius * .025, 'purple', 8);
+        }
+      }
+      if (!state.patrol.complete) {
+        const bacillus = contained[i];
+        const movement = bacillus ? bacillus.phase : phase;
+        drawBacteria(px + Math.cos(movement) * radius * .07, py + Math.sin(movement * .8) * radius * .065, radius * .04);
+      }
+      if (progress > 0) ring(px, py, radius * (.22 + Math.sin(progress * 5 + i) * .01), radius * .2, 'purple', 16);
+    }
+    cytosolic.forEach((bacillus, index) => {
+      const angle = bacillus.phase + index * 2.4;
+      drawBacteria(x + Math.cos(angle) * radius * .55, y + Math.sin(angle * .8) * radius * .48, radius * .065);
+    });
+    if ((phagosomeCount || cytosolic.length) && damage > .05) {
+      ring(x, y, radius * 1.06, radius * (1.02 - Math.min(.035, damage * .035)), 'capillary', 48);
+    }
+    if (defenses) {
+      defenses.forEach((module, index) => {
+        if (!module.active) return;
+        const angle = phase + index * 2.4;
+        const armX = x + Math.cos(angle) * radius * 1.15;
+        const armY = y + Math.sin(angle) * radius * 1.15;
+        circle(armX, armY, radius * .075, module.id === 'ros' ? 'vesicleLight' : module.id === 'rns' ? 'dna' : 'purple', 8);
+      });
+    }
+  }
+  function drawNeutrophil(x, y, radius, phase) {
+    circle(x, y, radius, 'vesicleLight', 30);
+    ring(x, y, radius, radius * .82, 'vesicle', 26);
+    for (let i = 0; i < 3; i++) {
+      const angle = i * Math.PI * 2 / 3 + phase;
+      circle(x + Math.cos(angle) * radius * .28, y + Math.sin(angle) * radius * .28, radius * .18, 'nucleus', 16);
+    }
+  }
+  function drawTHelper(x, y, radius, phase) {
+    circle(x, y, radius, 'purple', 24);
+    ring(x, y, radius, radius * .82, 'nucleusLight', 20);
+    circle(x, y, radius * .24, 'nucleus', 14);
+    ring(x - radius * .45, y - radius * .15, radius * .12, radius * .08, 'white', 10);
+  }
+  function drawBCell(x, y, radius) {
+    circle(x, y, radius, 'nucleusLight', 24);
+    ring(x, y, radius, radius * .82, 'white', 18);
+    for (let i = 0; i < 5; i++) {
+      const angle = i * Math.PI * 2 / 5;
+      ring(x + Math.cos(angle) * radius * .78, y + Math.sin(angle) * radius * .78, radius * .13, radius * .09, 'purple', 8);
+    }
+  }
+  function drawPlasmaCell(x, y, radius, phase) {
+    circle(x, y, radius, 'nucleusLight', 28);
+    ring(x, y, radius, radius * .84, 'cellLight', 24);
+    capsule(x - radius * .12, y, radius * .38, radius * .055, 'purple', phase);
+    for (let i = 0; i < 6; i++) {
+      const angle = i * Math.PI / 3 + phase;
+      circle(x + Math.cos(angle) * radius * 1.05, y + Math.sin(angle) * radius * 1.05, radius * .055, 'white', 8);
+    }
+  }
+  function drawPatrolScene(cx, cy, scale) {
+    circle(cx, cy, scale * .425, 'tissue', 76);
+    circle(cx, cy, scale * .397, 'air', 72);
+    ring(cx, cy, scale * .425, scale * .397, 'tissueLight', 72);
+    ring(cx, cy, scale * .392, scale * .38, 'capillary', 72);
+    for (let i = 0; i < 22; i++) {
+      const angle = i * Math.PI * 2 / 22;
+      const x = cx + Math.cos(angle) * scale * .411;
+      const y = cy + Math.sin(angle) * scale * .411;
+      circle(x, y, scale * .009, i % 3 === 0 ? 'capillary' : 'nucleus', 12);
+      if (i % 3 === 1) circle(cx + Math.cos(angle) * scale * .35, cy + Math.sin(angle) * scale * .35, scale * .004, 'vesicleLight', 8);
+    }
+    state.patrol.granulomas.forEach(granuloma => drawGranuloma(
+      cx + granuloma.x * scale, cy + granuloma.y * scale, scale, granuloma.maturity));
+    for (const bacillus of state.patrol.bacteria) {
+      const x = cx + bacillus.x * scale;
+      const y = cy + bacillus.y * scale;
+      if (bacillus.progress > 0) ring(x, y, scale * .016, scale * .012, 'vesicleLight', 16);
+      if (bacillus.netId) ring(x, y, scale * .014, scale * .01, 'dna', 16);
+      drawBacteria(x, y, scale * .009);
+    }
+    state.patrol.nets.forEach((net) => {
+      const radius = scale * net.radius;
+      const points = Array.from({ length: 10 }, (_, index) => {
+        const angle = index * Math.PI * 2 / 10 + net.phase;
+        return [cx + net.x * scale + Math.cos(angle) * radius,
+          cy + net.y * scale + Math.sin(angle) * radius];
+      });
+      for (let i = 0; i < points.length; i++) {
+        const [x1, y1] = points[i];
+        const [x2, y2] = points[(i + 1) % points.length];
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        capsule((x1 + x2) / 2, (y1 + y2) / 2, Math.hypot(dx, dy), scale * .002, 'dna', Math.atan2(dy, dx));
+        capsule((x1 + net.x * scale) / 2, (y1 + net.y * scale) / 2,
+          Math.hypot(x1 - net.x * scale, y1 - net.y * scale), scale * .002, 'white',
+          Math.atan2(y1 - net.y * scale, x1 - net.x * scale));
+      }
+    });
+    state.patrol.spreadSites.forEach((site, index) => {
+      ring(cx + site.x * scale, cy + site.y * scale, scale * (.035 + (index % 3) * .008), scale * (.027 + (index % 3) * .006), 'capillary', 18);
+      circle(cx + site.x * scale, cy + site.y * scale, scale * .006, 'bacteriaDark', 8);
+    });
+    state.patrol.macrophages.forEach((macrophage, index) => {
+      if (!macrophage.alive) return;
+      const infected = state.patrol.phagosomes.filter(item => item.cellIndex === index);
+      const birthScale = typeof macrophage.birthProgress === 'number' ? .18 + macrophage.birthProgress * .82 : 1;
+      const divisionScale = typeof macrophage.mitosisProgress === 'number'
+        ? 1 + Math.sin(macrophage.mitosisProgress * Math.PI) * .12 : 1;
+      drawPatrolMacrophage(cx + macrophage.x * scale, cy + macrophage.y * scale,
+        scale * (index ? .039 : .047) * birthScale * divisionScale,
+        macrophage.phase, infected, infected[0] ? infected[0].progress : 0, state.patrol.defenses,
+        macrophage.damage || 0, macrophage.mitosisProgress);
+    });
+    state.patrol.neutrophils.forEach((unit) => drawNeutrophil(cx + unit.x * scale, cy + unit.y * scale, scale * .038, unit.phase));
+    state.patrol.helperT.forEach((unit) => drawTHelper(cx + unit.x * scale, cy + unit.y * scale, scale * .027, unit.phase));
+    state.patrol.bCells.forEach((unit) => drawBCell(cx + unit.x * scale, cy + unit.y * scale, scale * .026));
+    state.patrol.plasmaCells.forEach((unit) => drawPlasmaCell(cx + unit.x * scale, cy + unit.y * scale, scale * .031, unit.phase));
+    state.patrol.antibodies.forEach((unit) => {
+      const x = cx + unit.x * scale;
+      const y = cy + unit.y * scale;
+      capsule(x - scale * .012, y, scale * .025, scale * .006, 'white', unit.phase);
+      capsule(x + scale * .012, y, scale * .025, scale * .006, 'white', -unit.phase);
+    });
+    state.patrol.complement.forEach((unit) => {
+      const x = cx + unit.x * scale;
+      const y = cy + unit.y * scale;
+      ring(x, y, scale * .018, scale * .012, 'nucleusLight', 12);
+      for (let i = 0; i < 6; i++) {
+        const angle = i * Math.PI / 3 + unit.phase;
+        circle(x + Math.cos(angle) * scale * .012, y + Math.sin(angle) * scale * .012, scale * .003, 'dna', 6);
+      }
+    });
+  }
+  function drawGranuloma(cx, cy, scale, maturity) {
+    const radius = scale * (.055 + maturity * .06);
+    ring(cx, cy, radius, radius * .82, 'tissueLight', 40);
+    ring(cx, cy, radius * .78, radius * .68, 'capillary', 36);
+    const cellCount = 5 + Math.round(maturity * 7);
+    for (let i = 0; i < cellCount; i++) {
+      const angle = i * Math.PI * 2 / cellCount;
+      const x = cx + Math.cos(angle) * radius * .72;
+      const y = cy + Math.sin(angle) * radius * .72;
+      circle(x, y, scale * .009, 'cellLight', 14);
+      circle(x - scale * .002, y, scale * .0035, 'nucleus', 10);
+    }
+    if (maturity > .25) {
+      const lymphocyteCount = Math.round(maturity * 10);
+      for (let i = 0; i < lymphocyteCount; i++) {
+        const angle = i * Math.PI * 2 / lymphocyteCount;
+        circle(cx + Math.cos(angle) * radius * 1.12, cy + Math.sin(angle) * radius * 1.12,
+          scale * .006, 'purple', 10);
+      }
+    }
+  }
+  function drawGranulomaScene(cx, cy, scale) {
+    const granuloma = state.patrol.granulomas[0];
+    const maturity = granuloma ? granuloma.maturity : 0;
+    const shell = scale * (.28 + maturity * .04);
+    circle(cx, cy, shell, 'tissue', 72);
+    ring(cx, cy, shell, shell * .94, 'capillary', 64);
+    ring(cx, cy, shell * .88, shell * .81, 'tissueLight', 56);
+    const coreRadius = scale * (.09 + maturity * .045);
+    circle(cx, cy, coreRadius, maturity > .72 ? 'bacteriaDark' : 'cell', 48);
+    ring(cx, cy, coreRadius, coreRadius * .78, 'vesicle', 40);
+    for (let i = 0; i < 9; i++) {
+      const angle = i * Math.PI * 2 / 9;
+      const radius = coreRadius + scale * .075;
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+      circle(x, y, scale * .045, 'cell', 24);
+      circle(x - scale * .01, y, scale * .014, 'nucleus', 14);
+      circle(x + scale * .008, y - scale * .01, scale * .009, 'nucleusLight', 10);
+    }
+    if (maturity > .18) {
+      ring(cx, cy, shell * .79, shell * .74, 'purple', 52);
+      const lymphocyteCount = 12 + Math.round(maturity * 12);
+      for (let i = 0; i < lymphocyteCount; i++) {
+        const angle = i * Math.PI * 2 / lymphocyteCount;
+        const radius = shell * .84;
+        circle(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, scale * .012, 'purple', 12);
+        circle(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, scale * .005, 'nucleusLight', 8);
+      }
+    }
+    if (maturity > .68) ring(cx, cy, shell * .99, shell * .96, 'vesicleLight', 56);
+    const bacillusCount = Math.min(7, state.patrol.phagosomes.length + state.patrol.bacteria.length);
+    for (let i = 0; i < bacillusCount; i++) {
+      const angle = i * 2.4 + performance.now() / 1200;
+      drawBacteria(cx + Math.cos(angle) * coreRadius * .55, cy + Math.sin(angle) * coreRadius * .45, scale * .014);
+    }
+    for (let i = 0; i < 5; i++) {
+      const angle = i * Math.PI * 2 / 5 + performance.now() / 5000;
+      circle(cx + Math.cos(angle) * shell * 1.08, cy + Math.sin(angle) * shell * 1.08, scale * .018, 'nucleusLight', 16);
+    }
+  }
+  function drawIntracellularScene(cx, cy, scale, view) {
+    const progress = getFocusProgress();
+    const eligible = canClearIntracellular();
+    const hasBacillus = state.patrol.phagosomes.length > 0 && !state.patrol.complete;
+    if (view === 'phagosome') {
+      circle(cx, cy, scale * .36, 'cell', 64);
+      ring(cx, cy, scale * .36, scale * .33, 'cellLight', 56);
+      circle(cx - scale * .12, cy, scale * .11, 'nucleus', 34);
+      circle(cx - scale * .14, cy - scale * .02, scale * .05, 'nucleusLight', 22);
+      circle(cx + scale * .12, cy - scale * .06, scale * .16, 'vesicle', 40);
+      ring(cx + scale * .12, cy - scale * .06, scale * .16, scale * .14, 'vesicleLight', 40);
+      const contained = state.patrol.phagosomes.filter(item => item.location !== 'cytosol');
+      if (contained.length) {
+        const bacillus = contained[0];
+        const phase = bacillus ? bacillus.phase : 0;
+        drawBacteria(cx + scale * (.12 + Math.cos(phase) * .045),
+          cy + scale * (-.06 + Math.sin(phase * .8) * .035), scale * .047);
+        for (let i = 0; i < 5; i++) {
+          const angle = phase + i * Math.PI * 2 / 5;
+          circle(cx + scale * (.12 + Math.cos(angle) * .105),
+            cy + scale * (-.06 + Math.sin(angle) * .105), scale * .008, 'vesicleLight', 8);
+        }
+      }
+      for (let i = 0; i < 5; i++) circle(cx + (i - 2) * scale * .052, cy + scale * .19, scale * .012, 'purple', 12);
+    } else if (view === 'host-cytosol') {
+      circle(cx, cy, scale * .35, 'cell', 64);
+      ring(cx, cy, scale * .35, scale * .32, 'cellLight', 56);
+      circle(cx - scale * .14, cy - scale * .02, scale * .12, 'nucleus', 36);
+      circle(cx - scale * .17, cy - scale * .04, scale * .055, 'nucleusLight', 22);
+      for (let i = 0; i < 7; i++) {
+        const angle = i * Math.PI * 2 / 7;
+        capsule(cx + Math.cos(angle) * scale * .1, cy + Math.sin(angle) * scale * .1,
+          scale * .12, scale * .006, 'vesicleLight', angle);
+      }
+      const escaped = state.patrol.phagosomes.filter(item => item.location === 'cytosol');
+      escaped.forEach((bacillus, index) => {
+        const angle = bacillus.phase + index * 2.4;
+        const radius = scale * (.085 + (index % 3) * .045);
+        drawBacteria(cx + Math.cos(angle) * radius, cy + Math.sin(angle * .8) * radius, scale * .038);
+      });
+      if (!escaped.length) {
+        for (let i = 0; i < 3; i++) drawBacteria(cx + scale * (.08 + i * .06), cy + scale * (i - 1) * .055, scale * .026);
+      }
+      const damage = Math.max(0, ...state.patrol.macrophages.filter(unit => unit.alive).map(unit => unit.damage || 0));
+      if (damage > .05) ring(cx, cy, scale * (.37 + damage * .02), scale * (.35 + damage * .02), 'capillary', 48);
+    } else if (view === 'wall') {
+      capsule(cx, cy, scale * .56, scale * .18, 'bacteriaDark', 0);
+      capsule(cx, cy, scale * .53, scale * .15, 'bacteria', 0);
+      capsule(cx, cy, scale * .45, scale * .105, 'vesicle', 0);
+      capsule(cx, cy, scale * .36, scale * .072, 'dark', 0);
+      const poreCount = eligible && progress > 1 ? Math.min(12, Math.floor((progress - 1) * 12)) : 0;
+      for (let i = 0; i < 12; i++) {
+        const x = cx + (i - 5.5) * scale * .041;
+        const y = i % 2 ? cy - scale * .145 : cy + scale * .145;
+        if (hasBacillus && i < poreCount) {
+          circle(x, y, scale * .014, 'dark', 12);
+          circle(x, y, scale * .006, 'white', 10);
+        } else {
+          circle(x, y, scale * .006, 'vesicleLight', 8);
+        }
+      }
+      if (eligible && progress >= 1) {
+        for (let i = 0; i < 8; i++) {
+          const angle = i * Math.PI / 4 + performance.now() / 1200;
+          const distance = scale * .22;
+          circle(cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance * .62, scale * .012, 'purple', 12);
+        }
+      }
+    } else if (view === 'cytoplasm') {
+      capsule(cx, cy, scale * .58, scale * .19, 'bacteria', 0);
+      capsule(cx, cy, scale * .5, scale * .145, 'dark', 0);
+      for (let i = 0; i < 25; i++) {
+        const t = i / 24;
+        const x = cx + (t - .5) * scale * .36;
+        const y = cy + Math.sin(t * Math.PI * 6) * scale * .06;
+        circle(x, y, scale * .008, i % 2 ? 'dna' : 'purple', 9);
+      }
+      for (let i = 0; i < 12; i++) {
+        const x = cx + (i - 5.5) * scale * .045;
+        const y = cy + Math.cos(i * 1.8) * scale * .09;
+        circle(x, y, scale * .006, 'vesicleLight', 8);
+      }
+      if (eligible && progress > 2 && hasBacillus) {
+        for (let i = 0; i < 10; i++) {
+          const x = cx + Math.sin(i * 12.989) * scale * .19;
+          const y = cy + Math.cos(i * 6.412) * scale * .105;
+          circle(x, y, scale * .014, 'purple', 12);
+          circle(x, y, scale * .006, 'white', 9);
+        }
+      }
+    } else {
+      circle(cx, cy, scale * .34, 'vesicle', 64);
+      ring(cx, cy, scale * .34, scale * .31, 'vesicleLight', 56);
+      ring(cx, cy, scale * .28, scale * .255, 'purple', 48);
+      for (let i = 0; i < 16; i++) {
+        const angle = i * 2.4;
+        const radius = scale * (.12 + (i % 3) * .025);
+        circle(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, scale * .012, i % 2 ? 'purple' : 'vesicleLight', 10);
+      }
+      if (hasBacillus && progress >= 3 && progress < 3.7) drawBacteria(cx, cy, scale * .075);
+      else if (hasBacillus && progress >= 3) {
+        for (let i = 0; i < 5; i++) capsule(cx + (i - 2) * scale * .035, cy + Math.sin(i) * scale * .025,
+          scale * .035, scale * .012, i % 2 ? 'bacteriaDark' : 'bacteria', 0);
+      }
+    }
+  }
+  function drawScene() {
+    shapeVertices = [];
+    const w = sceneCanvas.width / pixelRatio();
+    const h = sceneCanvas.height / pixelRatio();
+    const cx = w / 2 + state.camera.x;
+    const cy = h / 2 + state.camera.y;
+    const scale = Math.min(w, h);
+    const level = state.level;
+
+    if (state.patrol.active) {
+      if (state.patrol.infectionView === 'alveolus') drawPatrolScene(cx, cy, scale);
+      else if (state.patrol.infectionView === 'granuloma') drawGranulomaScene(cx, cy, scale);
+      else drawIntracellularScene(cx, cy, scale, state.patrol.infectionView);
+    } else if (level === 0) {
+      drawLung(cx, cy, scale, -1);
+      drawLung(cx, cy, scale, 1);
+      capsule(cx, cy - scale * .20, scale * .25, scale * .026, 'airLight', Math.PI / 2);
+      ring(cx, cy - scale * .20, scale * .027, scale * .018, 'tissueLight', 20);
+      capsule(cx - scale * .075, cy - scale * .015, scale * .21, scale * .021, 'airLight', 2.15);
+      capsule(cx + scale * .075, cy - scale * .015, scale * .21, scale * .021, 'airLight', .99);
+      for (let branch = 0; branch < 3; branch++) {
+        const offset = branch * scale * .047;
+        const length = scale * (.12 - branch * .012);
+        capsule(cx - scale * .105 - offset, cy + scale * (.015 + branch * .045), length, scale * .009, 'airLight', 2.55 + branch * .12);
+        capsule(cx + scale * .105 + offset, cy + scale * (.015 + branch * .045), length, scale * .009, 'airLight', .59 - branch * .12);
+      }
+      for (let side of [-1, 1]) {
+        for (let vessel = 0; vessel < 5; vessel++) {
+          const x = cx + side * scale * (.13 + vessel * .032);
+          const y = cy + scale * (.16 + (vessel % 3) * .052);
+          capsule(x, y, scale * .12, scale * .0035, 'capillary', .7 + vessel * .38);
+          circle(x, y, scale * .006, 'nucleus', 8);
+        }
+      }
+    } else if (level === 1) {
+      circle(cx, cy, scale * .34, 'tissue', 72);
+      ring(cx, cy, scale * .34, scale * .32, 'tissueLight', 64);
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2;
+        circle(cx + Math.cos(a) * scale * .23, cy + Math.sin(a) * scale * .23, scale * .068, 'air', 30);
+        ring(cx + Math.cos(a) * scale * .23, cy + Math.sin(a) * scale * .23, scale * .068, scale * .059, 'tissueLight', 26);
+      }
+      circle(cx - scale * .05, cy, scale * .09, 'airLight', 36);
+    } else if (level === 2) {
+      ring(cx, cy, scale * .31, scale * .23, 'tissue', 70);
+      circle(cx, cy, scale * .228, 'air', 58);
+      ring(cx, cy, scale * .23, scale * .22, 'tissueLight', 58);
+      for (let i = 0; i < 24; i++) {
+        const a = i / 24 * Math.PI * 2;
+        circle(cx + Math.cos(a) * scale * .267, cy + Math.sin(a) * scale * .267, 3, i % 3 === 0 ? 'nucleus' : 'vesicle', 10);
+      }
+    } else if (level === 3) {
+      drawAlveolarCluster(cx, cy, scale);
+    } else if (level === 4) {
+      const perimeter = [];
+      for (let i = 0; i < 44; i++) {
+        const angle = i / 44 * Math.PI * 2;
+        const undulation = 1 + .055 * Math.sin(angle * 5 + .4) + .025 * Math.sin(angle * 9);
+        perimeter.push([cx + Math.cos(angle) * scale * .34 * undulation,
+          cy + Math.sin(angle) * scale * .30 * undulation]);
+      }
+      filledPolygon(perimeter, 'cell');
+      ring(cx, cy, scale * .35, scale * .33, 'cellLight', 56);
+      circle(cx - scale * .105, cy + scale * .005, scale * .13, 'nucleus', 42);
+      circle(cx - scale * .14, cy - scale * .045, scale * .075, 'nucleusLight', 32);
+      ring(cx - scale * .105, cy + scale * .005, scale * .153, scale * .144, 'purple', 44);
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2 + .3;
+        capsule(cx - scale * .105 + Math.cos(a) * scale * .155,
+          cy + Math.sin(a) * scale * .14, scale * .07, scale * .006, 'vesicle', a + Math.PI / 2);
+      }
+      for (let i = 0; i < 5; i++) {
+        const y = cy - scale * .09 + i * scale * .035;
+        capsule(cx + scale * .035, y, scale * (.085 - (i % 2) * .014), scale * .008, 'vesicleLight', -.08);
+        for (let dot = 0; dot < 5; dot++) {
+          circle(cx + scale * (.01 + dot * .016), y + scale * .009, scale * .0032, 'nucleusLight', 6);
+        }
+      }
+      for (let i = 0; i < 4; i++) {
+        const y = cy + scale * .075 + i * scale * .027;
+        capsule(cx + scale * .13, y, scale * .09, scale * .013, 'vesicle', -.18);
+        capsule(cx + scale * .13, y, scale * .067, scale * .004, 'vesicleLight', -.18);
+      }
+      for (let i = 0; i < 4; i++) {
+        const angle = i * Math.PI / 2 + .25;
+        const x = cx + Math.cos(angle) * scale * .225;
+        const y = cy + Math.sin(angle) * scale * .19;
+        capsule(x, y, scale * .095, scale * .026, 'vesicle', angle);
+        capsule(x, y, scale * .06, scale * .006, 'vesicleLight', angle);
+        for (let fold = -1; fold <= 1; fold++) {
+          capsule(x + Math.cos(angle + Math.PI / 2) * fold * scale * .008,
+            y + Math.sin(angle + Math.PI / 2) * fold * scale * .008,
+            scale * .038, scale * .0025, 'cellLight', angle);
+        }
+      }
+      circle(cx + scale * .23, cy + scale * .03, scale * .026, 'vesicleLight', 18);
+      ring(cx + scale * .23, cy + scale * .03, scale * .033, scale * .026, 'purple', 18);
+      circle(cx - scale * .23, cy - scale * .13, scale * .04, 'vesicleLight', 20);
+      circle(cx - scale * .23, cy - scale * .13, scale * .013, 'dark', 12);
+      circle(cx + scale * .055, cy + scale * .22, scale * .018, 'nucleusLight', 12);
+      drawBacteria(cx + scale * .19, cy - scale * .17, scale * .022);
+      const defenseActive = id => state.patrol.defenses.some(module => module.id === id && module.active);
+      if (defenseActive('ifng')) ring(cx, cy, scale * .365, scale * .355, 'purple', 64);
+      if (defenseActive('acidification')) {
+        for (let i = 0; i < 5; i++) {
+          circle(cx + scale * (.17 + i * .018), cy - scale * .2, scale * .011, 'vesicleLight', 9);
+        }
+      }
+      if (defenseActive('lap') || defenseActive('xenophagy')) {
+        ring(cx + scale * .19, cy - scale * .17, scale * .045, scale * .038, 'dna', 24);
+      }
+      if (defenseActive('ros') || defenseActive('rns')) {
+        for (let i = 0; i < 9; i++) {
+          const angle = i * Math.PI * 2 / 9;
+          circle(cx + scale * .19 + Math.cos(angle) * scale * .055,
+            cy - scale * .17 + Math.sin(angle) * scale * .045, scale * .008,
+            i % 2 ? 'vesicleLight' : 'dna', 7);
+        }
+      }
+      if (defenseActive('cgas')) {
+        circle(cx - scale * .04, cy + scale * .05, scale * .025, 'dna', 16);
+        ring(cx - scale * .04, cy + scale * .05, scale * .033, scale * .029, 'white', 16);
+      }
+      if (defenseActive('inflammasome')) {
+        ring(cx + scale * .13, cy + scale * .19, scale * .045, scale * .035, 'purple', 20);
+        for (let i = 0; i < 3; i++) circle(cx + scale * (.11 + i * .02), cy + scale * .19, scale * .01, 'nucleusLight', 8);
+      }
+    } else if (level === 5) {
+      circle(cx, cy, scale * .33, 'nucleus', 72);
+      ring(cx, cy, scale * .33, scale * .31, 'nucleusLight', 64);
+      for (let i = 0; i < 7; i++) {
+        const a = i * 2.4;
+        circle(cx + Math.cos(a) * scale * .14, cy + Math.sin(a) * scale * .12, scale * .035, i % 2 ? 'purple' : 'nucleusLight', 18);
+      }
+      ring(cx, cy, scale * .09, scale * .075, 'white', 40);
+    } else if (level === 6 || level === 7) {
+      circle(cx, cy, scale * .32, level === 7 ? 'vesicle' : 'vesicleLight', 70);
+      ring(cx, cy, scale * .32, scale * .29, level === 7 ? 'vesicleLight' : 'tissueLight', 64);
+      for (let i = 0; i < 8; i++) {
+        const a = i * .79;
+        circle(cx + Math.cos(a) * scale * .17, cy + Math.sin(a) * scale * .17, scale * .028, i % 2 ? 'purple' : 'vesicleLight', 14);
+      }
+      drawBacteria(cx + scale * .035, cy + scale * .03, scale * .055);
+      circle(cx - scale * .15, cy - scale * .12, scale * .055, 'dark', 28);
+      if (level === 7) ring(cx, cy, scale * .26, scale * .245, 'purple', 48);
+    } else if (level === 8) {
+      drawBacteria(cx, cy, scale * .115);
+      for (let i = 0; i < 10; i++) {
+        const a = i / 10 * Math.PI * 2;
+        circle(cx + Math.cos(a) * scale * .2, cy + Math.sin(a) * scale * .2, 4, i % 2 ? 'vesicleLight' : 'purple', 10);
+      }
+      ring(cx, cy, scale * .29, scale * .275, 'dark', 64);
+    } else if (level === 9) {
+      circle(cx, cy, scale * .35, 'bacteriaDark', 64);
+      ring(cx, cy, scale * .37, scale * .32, 'vesicle', 72);
+      ring(cx, cy, scale * .32, scale * .285, 'bacteria', 72);
+      ring(cx, cy, scale * .285, scale * .26, 'purple', 72);
+      ring(cx, cy, scale * .25, scale * .225, 'vesicleLight', 72);
+      circle(cx, cy, scale * .222, 'dark', 64);
+      for (let i = 0; i < 22; i++) {
+        const a = i * .286;
+        circle(cx + Math.cos(a) * scale * .30, cy + Math.sin(a) * scale * .30, 2.5, 'white', 9);
+      }
+    } else if (level === 10) {
+      circle(cx, cy, scale * .35, 'dark', 64);
+      ring(cx, cy, scale * .35, scale * .33, 'bacteria', 64);
+      for (let i = 0; i < 26; i++) {
+        const x = cx + Math.sin(i * 12.989) * scale * .22;
+        const y = cy + Math.cos(i * 6.412) * scale * .2;
+        circle(x, y, 2.1, i % 3 ? 'vesicleLight' : 'dna', 8);
+      }
+      for (let i = 0; i < 4; i++) circle(cx - scale * .17 + i * scale * .105, cy + scale * .04, scale * .018, 'purple', 15);
+      circle(cx - scale * .11, cy - scale * .14, scale * .05, 'nucleusLight', 22);
+    } else if (level === 11) {
+      ring(cx, cy, scale * .29, scale * .275, 'dna', 64);
+      for (let i = 0; i < 55; i++) {
+        const t = i / 55 * Math.PI * 4;
+        const x = cx + Math.cos(t) * scale * (.12 + i / 55 * .12);
+        const y = cy + Math.sin(t) * scale * (.12 + i / 55 * .12);
+        circle(x, y, 2.4, i % 2 ? 'dna' : 'purple', 9);
+      }
+      for (let i = 0; i < 11; i++) {
+        const t = i / 10 * Math.PI * 2;
+        const x = cx + Math.cos(t) * scale * .18;
+        const y = cy + Math.sin(t) * scale * .18;
+        ring(x, y, scale * .054, scale * .048, 'white', 20);
+      }
+    } else {
+      circle(cx, cy, scale * .33, 'dark', 64);
+      ring(cx, cy, scale * .33, scale * .31, 'dna', 64);
+      const genes = [
+        ['esxA', -0.20, -0.12, 'bacteria'], ['esxB', -0.08, -0.12, 'bacteria'],
+        ['katG', 0.07, -0.12, 'vesicle'], ['inhA', 0.19, -0.12, 'vesicle'],
+        ['rpoB', -0.12, 0.06, 'purple'], ['embB', 0.06, 0.06, 'purple']
+      ];
+      genes.forEach((gene, index) => {
+        const x = cx + scale * gene[1];
+        const y = cy + scale * gene[2];
+        capsule(x, y, scale * .11, scale * .018, gene[3]);
+        if (index === 0 || index === 1) circle(x, y, scale * .024, 'bacteria', 16);
+      });
+    }
+
+    gl.viewport(0, 0, sceneCanvas.width, sceneCanvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.uniform2f(resolutionLocation, sceneCanvas.width / pixelRatio(), sceneCanvas.height / pixelRatio());
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const positions = [];
+    const colors = [];
+    for (let i = 0; i < shapeVertices.length; i += 6) {
+      positions.push(shapeVertices[i], shapeVertices[i + 1]);
+      colors.push(shapeVertices[i + 2], shapeVertices[i + 3], shapeVertices[i + 4], shapeVertices[i + 5]);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(colorLocation);
+    gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2);
+  }
+
+  let dpr = 1;
+  function pixelRatio() { return dpr; }
+  function resize() {
+    const rect = sceneCanvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.max(1, Math.floor(rect.width * dpr));
+    const height = Math.max(1, Math.floor(rect.height * dpr));
+    if (sceneCanvas.width !== width || sceneCanvas.height !== height) {
+      sceneCanvas.width = width;
+      sceneCanvas.height = height;
+      overlayCanvas.width = width;
+      overlayCanvas.height = height;
+    }
+    drawScene();
+    drawMinimap();
+  }
+
+  function renderOverlay(time) {
+    const w = overlayCanvas.width / dpr;
+    const h = overlayCanvas.height / dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2 + state.camera.x;
+    const cy = h / 2 + state.camera.y;
+    drawLabels(ctx, cx, cy, w, h);
+    if (!state.patrol.active && state.level === 0) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(136,220,201,.24)';
+      ctx.lineWidth = Math.max(1, Math.min(w, h) * .002);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - Math.min(w, h) * .32);
+      ctx.lineTo(cx, cy - Math.min(w, h) * .12);
+      ctx.bezierCurveTo(cx, cy - Math.min(w, h) * .05, cx - Math.min(w, h) * .08, cy - Math.min(w, h) * .04, cx - Math.min(w, h) * .15, cy + Math.min(w, h) * .08);
+      ctx.moveTo(cx, cy - Math.min(w, h) * .12);
+      ctx.bezierCurveTo(cx, cy - Math.min(w, h) * .05, cx + Math.min(w, h) * .08, cy - Math.min(w, h) * .04, cx + Math.min(w, h) * .15, cy + Math.min(w, h) * .08);
+      ctx.stroke();
+      const airflow = (time / 1800) % 1;
+      for (let i = 0; i < 6; i++) {
+        const t = (airflow + i / 6) % 1;
+        const y = cy - Math.min(w, h) * .29 + t * Math.min(w, h) * .34;
+        const x = cx + Math.sin(t * Math.PI * 3 + i) * Math.min(w, h) * .06;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(150,236,215,${.22 + .38 * Math.sin(t * Math.PI)})`;
+        ctx.arc(x, y, 1.5 + Math.min(w, h) * .002, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    } else if (!state.patrol.active && state.level === 3) {
+      ctx.save();
+      const sacs = [[-.14, -.19], [0, -.21], [.14, -.18], [-.22, -.04], [-.07, -.06],
+        [.09, -.04], [.23, -.02], [-.18, .12], [-.02, .13], [.15, .12], [0, .25]];
+      sacs.forEach(([x, y], index) => {
+        const pulse = 1 + .035 * Math.sin(time / 650 + index * .8);
+        const radius = Math.min(w, h) * (.084 + (index % 3) * .004) * pulse;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(144,223,208,${.12 + .08 * (1 + Math.sin(time / 520 + index))})`;
+        ctx.lineWidth = 1;
+        ctx.arc(cx + x * Math.min(w, h), cy + y * Math.min(w, h), radius, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+    if (state.patrol.active && state.patrol.infectionView === 'alveolus') {
+      const scale = Math.min(w, h);
+      state.patrol.macrophages.forEach((unit) => {
+        if (!unit.alive) return;
+        state.patrol.defenses.forEach((module, index) => {
+          if (!module.active) return;
+          const angle = time / 850 + index * 2.2 + unit.phase;
+          const radius = scale * (.055 + (index % 3) * .012);
+          const x = cx + unit.x * scale + Math.cos(angle) * radius;
+          const y = cy + unit.y * scale + Math.sin(angle) * radius * .7;
+          ctx.beginPath();
+          ctx.fillStyle = module.id === 'ros' ? 'rgba(255,195,103,.8)'
+            : module.id === 'rns' ? 'rgba(131,188,255,.82)'
+              : module.id === 'lap' || module.id === 'xenophagy' ? 'rgba(126,222,215,.82)'
+                : 'rgba(196,158,228,.8)';
+          ctx.shadowBlur = 7;
+          ctx.shadowColor = ctx.fillStyle;
+          ctx.arc(x, y, 2 + Math.sin(time / 300 + index) * .7, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      });
+      ctx.shadowBlur = 0;
+    } else if (!state.patrol.active && state.level === 4) {
+      const scale = Math.min(w, h);
+      state.patrol.defenses.forEach((module, index) => {
+        if (!module.active) return;
+        const angle = time / 900 + index * 2.2;
+        const radius = scale * (.245 + (index % 3) * .014);
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius * .82;
+        ctx.beginPath();
+        ctx.fillStyle = module.id === 'ros' ? 'rgba(255,195,103,.8)'
+          : module.id === 'rns' ? 'rgba(131,188,255,.82)'
+            : module.id === 'lap' || module.id === 'xenophagy' ? 'rgba(126,222,215,.82)'
+              : 'rgba(196,158,228,.8)';
+        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(191,220,212,.82)';
+        ctx.font = '8px "Cascadia Code", monospace';
+        ctx.fillText(module.short, x + 5, y - 4);
+      });
+    }
+    if (state.patrol.active && state.patrol.infectionView === 'alveolus') {
+      state.patrol.granulomas.forEach(granuloma => {
+        const x = cx + granuloma.x * Math.min(w, h);
+        const y = cy + granuloma.y * Math.min(w, h);
+        const radius = Math.min(w, h) * (.055 + granuloma.maturity * .06);
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(208,170,231,${.35 + .2 * Math.sin(time / 420 + granuloma.phase)})`;
+        ctx.lineWidth = 1.5;
+        ctx.arc(x, y, radius + Math.sin(time / 360) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+    }
+    if (state.patrol.active && state.patrol.running) {
+      state.patrol.macrophages.forEach((unit) => {
+        if (!unit.alive || (typeof unit.mitosisProgress !== 'number'
+          && typeof unit.birthProgress !== 'number' && typeof unit.mitosisEffect !== 'number')) return;
+        const x = cx + unit.x * Math.min(w, h);
+        const y = cy + unit.y * Math.min(w, h);
+        ctx.fillStyle = 'rgba(204,239,222,.92)';
+        ctx.font = '8px "Cascadia Code", monospace';
+        ctx.fillText(unit.mitosisEffect > 0 && unit.birthProgress === undefined ? 'NOVA CÉLULA' : 'MITOSE', x + 7, y - 10);
+      });
+    }
+    if (state.particles) {
+      state.particleItems.forEach((particle) => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        if (particle.x < -15 || particle.x > w + 15) particle.vx *= -1;
+        if (particle.y < -15 || particle.y > h + 15) particle.vy *= -1;
+        const pulse = .65 + Math.sin(time / 420 + particle.phase) * .2;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${particle.color},${pulse})`;
+        ctx.shadowBlur = particle.kind === 'LL-37' ? 8 : 4;
+        ctx.shadowColor = `rgba(${particle.color},.8)`;
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.shadowBlur = 0;
+    }
+    if (state.patrol.active) {
+      const scale = Math.min(w, h);
+      state.patrol.deaths.forEach((death) => {
+        const x = cx + death.x * scale;
+        const y = cy + death.y * scale;
+        const progress = Math.max(0, Math.min(1, death.life));
+        ctx.save();
+        ctx.globalAlpha = 1 - progress;
+        if (death.type === 'osmotic') {
+          ctx.strokeStyle = '#a8e1ff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, 5 + progress * 18, 0, Math.PI * 2);
+          ctx.stroke();
+          for (let i = 0; i < 10; i++) {
+            const angle = i * Math.PI * 2 / 10;
+            ctx.beginPath();
+            ctx.fillStyle = '#e6f7ff';
+            ctx.arc(x + Math.cos(angle) * (8 + progress * 20), y + Math.sin(angle) * (8 + progress * 20), 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = '#ccefff';
+          ctx.font = '8px "Cascadia Code", monospace';
+          ctx.fillText('Lise osmótica · MAC', x + 10, y - 12);
+        } else if (death.type === 'peptide') {
+          ctx.strokeStyle = '#ffd3a1';
+          ctx.lineWidth = 1.5;
+          for (let i = 0; i < 8; i++) {
+            const angle = i * Math.PI / 4 + progress * 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.cos(angle) * (10 + progress * 24), y + Math.sin(angle) * (10 + progress * 24));
+            ctx.stroke();
+          }
+          ctx.fillStyle = '#ffd3a1';
+          ctx.font = '8px "Cascadia Code", monospace';
+          ctx.fillText('Peptídeos antimicrobianos', x + 8, y - 12);
+        } else if (death.type === 'neutrophil') {
+          ctx.strokeStyle = '#d7c8ff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(x, y, 4 + progress * 18, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = '#e2d9ff';
+          ctx.font = '8px "Cascadia Code", monospace';
+          ctx.fillText('Fagocitose neutrofílica · modelo', x + 8, y - 12);
+        } else if (death.type === 'oxidative') {
+          ctx.strokeStyle = '#ffc66f';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for (let i = 0; i < 7; i++) {
+            const angle = i * Math.PI * 2 / 7 + progress * 3;
+            const radius = 5 + progress * 18;
+            ctx.moveTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+            ctx.lineTo(x + Math.cos(angle + .4) * (radius + 4), y + Math.sin(angle + .4) * (radius + 4));
+          }
+          ctx.stroke();
+          ctx.fillStyle = '#ffd899';
+          ctx.font = '8px "Cascadia Code", monospace';
+          ctx.fillText('ROS/RNS · estresse oxidativo', x + 8, y - 12);
+        } else if (death.type === 'macrophage-lysis') {
+          ctx.strokeStyle = '#ff927d';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, 7 + progress * 30, 0, Math.PI * 2);
+          ctx.stroke();
+          for (let i = 0; i < 10; i++) {
+            const angle = i * Math.PI * 2 / 10;
+            const distance = 8 + progress * 34;
+            ctx.beginPath();
+            ctx.fillStyle = i % 2 ? '#f5ad79' : '#f47d6d';
+            ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = '#ffc2a3';
+          ctx.font = '8px "Cascadia Code", monospace';
+          ctx.fillText('Ruptura celular · bacilos liberados', x + 8, y - 12);
+        } else {
+          ctx.fillStyle = '#bda4df';
+          for (let i = 0; i < 12; i++) {
+            const angle = i * Math.PI * 2 / 12;
+            ctx.beginPath();
+            ctx.arc(x + Math.cos(angle) * progress * 18, y + Math.sin(angle) * progress * 18, 2 + (1 - progress) * 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.font = '8px "Cascadia Code", monospace';
+          ctx.fillText('Fagolisossomo', x + 8, y - 12);
+        }
+        ctx.restore();
+      });
+    }
+    if (state.patrol.active && state.patrol.running) {
+      const signalLength = getActiveSignalLength();
+      const scale = Math.min(w, h);
+      const colors = ['121,225,182', '255,184,99', '125,178,255'];
+      state.patrol.macrophages.forEach((macrophage) => {
+        if (!macrophage.alive) return;
+        for (let i = 0; i < signalLength * 2; i++) {
+          const angle = time / 900 + i * 2.4 + macrophage.phase;
+          const radius = scale * (.055 + (i % 3) * .013);
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(${colors[i % colors.length]},${.46 + .25 * Math.sin(time / 300 + i)})`;
+          ctx.arc(w / 2 + macrophage.x * scale + Math.cos(angle) * radius,
+            h / 2 + macrophage.y * scale + Math.sin(angle) * radius, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+    if (state.patrol.active && state.patrol.phagosomes.length && state.patrol.phageTherapy && canClearIntracellular()
+      && ['wall', 'cytoplasm'].includes(state.patrol.infectionView)) {
+      const scale = Math.min(w, h);
+      for (let i = 0; i < 18; i++) {
+        const angle = time / 560 + i * Math.PI * 2 / 18;
+        const radius = scale * (.08 + (i % 4) * .014);
+        const x = w / 2 + Math.cos(angle) * radius;
+        const y = h / 2 + Math.sin(angle) * radius * .55;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(199,157,236,${.48 + .3 * Math.sin(time / 300 + i)})`;
+        ctx.shadowBlur = 7;
+        ctx.shadowColor = 'rgba(190,148,235,.8)';
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(218,190,240,.9)';
+      ctx.font = '9px "Cascadia Code", Consolas, monospace';
+      ctx.fillText('1.000 fagos simbólicos', Math.max(12, w / 2 - scale * .2), h / 2 + scale * .2);
+    }
+  }
+  function drawLabels(c, cx, cy, w, h) {
+    c.save();
+    c.font = '9px "Cascadia Code", Consolas, monospace';
+    c.textBaseline = 'middle';
+    c.lineWidth = 1;
+    const addLabel = (text, x, y, anchorX, anchorY) => {
+      c.strokeStyle = 'rgba(144,205,192,.38)';
+      c.beginPath(); c.moveTo(x, y); c.lineTo(anchorX, anchorY); c.stroke();
+      c.fillStyle = 'rgba(159,216,199,.87)'; c.fillText(text, x + (x < cx ? -c.measureText(text).width : 5), y);
+      c.beginPath(); c.fillStyle = '#7ce0be'; c.arc(anchorX, anchorY, 2, 0, Math.PI * 2); c.fill();
+    };
+    if (state.patrol.active && state.patrol.infectionView !== 'alveolus') {
+      const stage = infectionViews.find(item => item.id === state.patrol.infectionView);
+      addLabel(stage ? stage.title : 'infecção', cx - Math.min(w, h) * .35, cy - Math.min(w, h) * .2,
+        cx, cy - Math.min(w, h) * .08);
+      if (state.patrol.infectionView === 'wall') addLabel('LAM · ácidos micólicos', cx + Math.min(w, h) * .2, cy + Math.min(w, h) * .2,
+        cx + Math.min(w, h) * .16, cy + Math.min(w, h) * .08);
+      if (state.patrol.infectionView === 'cytoplasm') addLabel('nucleoide · ribossomos', cx + Math.min(w, h) * .2, cy + Math.min(w, h) * .2,
+        cx + Math.min(w, h) * .12, cy);
+      if (state.patrol.infectionView === 'host-cytosol') addLabel('escape fagossomal · ESX-1 (esquema)', cx + Math.min(w, h) * .2,
+        cy + Math.min(w, h) * .2, cx + Math.min(w, h) * .1, cy);
+      if (state.patrol.infectionView === 'phagosome') addLabel('compartimento intracelular', cx + Math.min(w, h) * .2, cy + Math.min(w, h) * .2,
+        cx + Math.min(w, h) * .1, cy);
+      if (state.patrol.infectionView === 'phagolysosome') addLabel('maturação · degradação', cx + Math.min(w, h) * .2, cy + Math.min(w, h) * .2,
+        cx + Math.min(w, h) * .1, cy + Math.min(w, h) * .08);
+      if (state.patrol.infectionView === 'granuloma') {
+        addLabel('macrófagos infectados', cx - Math.min(w, h) * .18, cy - Math.min(w, h) * .23,
+          cx - Math.min(w, h) * .12, cy - Math.min(w, h) * .08);
+        addLabel('linfócitos periféricos', cx + Math.min(w, h) * .12, cy + Math.min(w, h) * .32,
+          cx + Math.min(w, h) * .15, cy + Math.min(w, h) * .12);
+      }
+    } else if (state.patrol.active) {
+      addLabel('lúmen alveolar', cx - Math.min(w, h) * .37, cy - Math.min(w, h) * .16,
+        cx - Math.min(w, h) * .18, cy - Math.min(w, h) * .12);
+      addLabel('macrófago alveolar', cx + Math.min(w, h) * .23, cy + Math.min(w, h) * .24,
+        cx + Math.min(w, h) * .08, cy + Math.min(w, h) * .08);
+      addLabel('M. tuberculosis', cx + Math.min(w, h) * .22, cy + Math.min(w, h) * .1,
+        cx + Math.min(w, h) * .18, cy + Math.min(w, h) * .04);
+    } else if (state.level === 0) {
+      addLabel('árvore brônquica', cx + 9, cy - Math.min(w, h) * .2, cx, cy - Math.min(w, h) * .11);
+      addLabel('lóbulo', cx - Math.min(w, h) * .34, cy + 25, cx - Math.min(w, h) * .17, cy + 10);
+      addLabel('alvéolos', cx + Math.min(w, h) * .22, cy + 55, cx + Math.min(w, h) * .17, cy + 12);
+    } else if (state.level === 3) {
+      addLabel('espaço aéreo', cx - Math.min(w, h) * .41, cy - 15, cx - 15, cy - 10);
+      addLabel('rede capilar', cx + Math.min(w, h) * .3, cy + 22, cx + Math.min(w, h) * .34, cy);
+    } else if (state.level === 4) {
+      addLabel('núcleo', cx - Math.min(w, h) * .42, cy - 17, cx - Math.min(w, h) * .1, cy);
+      addLabel('RER', cx - Math.min(w, h) * .4, cy - Math.min(w, h) * .23, cx - Math.min(w, h) * .1, cy - Math.min(w, h) * .14);
+      addLabel('Golgi', cx + Math.min(w, h) * .25, cy + Math.min(w, h) * .2, cx + Math.min(w, h) * .11, cy + Math.min(w, h) * .14);
+      addLabel('mitocôndria', cx + Math.min(w, h) * .24, cy - Math.min(w, h) * .21, cx + Math.min(w, h) * .18, cy - Math.min(w, h) * .12);
+      addLabel('lisossomo · endossomo', cx - Math.min(w, h) * .42, cy + Math.min(w, h) * .25, cx - Math.min(w, h) * .22, cy - Math.min(w, h) * .12);
+      c.save();
+      c.strokeStyle = 'rgba(152,221,194,.37)';
+      c.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI / 4;
+        c.beginPath();
+        c.moveTo(cx - Math.min(w, h) * .1, cy);
+        c.quadraticCurveTo(cx + Math.cos(angle) * Math.min(w, h) * .19, cy + Math.sin(angle) * Math.min(w, h) * .19,
+          cx + Math.cos(angle) * Math.min(w, h) * .29, cy + Math.sin(angle) * Math.min(w, h) * .29);
+        c.stroke();
+      }
+      c.restore();
+    } else if (state.level === 9) {
+      addLabel('LAM', cx - Math.min(w, h) * .4, cy - 45, cx - Math.min(w, h) * .25, cy - Math.min(w, h) * .22);
+      addLabel('ácidos micólicos', cx + Math.min(w, h) * .25, cy + 20, cx + Math.min(w, h) * .32, cy);
+      addLabel('membrana', cx - Math.min(w, h) * .36, cy + 55, cx - Math.min(w, h) * .28, cy + Math.min(w, h) * .2);
+    } else if (state.level === 12) {
+      addLabel('esxA · esxB', cx - Math.min(w, h) * .4, cy - 55, cx - Math.min(w, h) * .15, cy - Math.min(w, h) * .12);
+      addLabel('katG · inhA', cx + Math.min(w, h) * .25, cy - 45, cx + Math.min(w, h) * .12, cy - Math.min(w, h) * .12);
+      addLabel('rpoB · embB', cx + Math.min(w, h) * .25, cy + 48, cx + Math.min(w, h) * .06, cy + Math.min(w, h) * .06);
+    }
+    if (state.topic === 'antigen') {
+      const x = Math.min(w - 18, cx + Math.min(w, h) * .19);
+      c.fillStyle = 'rgba(173,218,206,.86)';
+      c.font = '10px "Segoe UI", Arial, sans-serif';
+      c.fillText('peptídeo → MHC-II → T CD4⁺', Math.max(18, cx - 100), h * .74);
+    } else if (state.topic === 'phage') {
+      c.fillStyle = 'rgba(205,179,229,.9)';
+      c.font = '10px "Segoe UI", Arial, sans-serif';
+      c.fillText('fago → RNA guia / Csm → interferência (conceitual)', Math.max(18, cx - 130), h * .74);
+    }
+    c.restore();
+  }
+
+  const particleColors = [
+    { kind: 'LL-37', color: '121,225,182' },
+    { kind: 'ROS', color: '255,184,99' },
+    { kind: 'RNS', color: '125,178,255' },
+    { kind: 'Citocina', color: '224,144,205' }
+  ];
+  function resetParticles() {
+    const w = overlayCanvas.width / dpr || 700;
+    const h = overlayCanvas.height / dpr || 400;
+    state.particleItems = Array.from({ length: 42 }, (_, index) => {
+      const kind = particleColors[index % particleColors.length];
+      return { x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .32, vy: (Math.random() - .5) * .32, radius: 1 + Math.random() * 1.6, phase: Math.random() * 8, ...kind };
+    });
+  }
+
+  function drawMinimap() {
+    const w = minimap.width, h = minimap.height;
+    mapCtx.clearRect(0, 0, w, h);
+    mapCtx.fillStyle = 'rgba(10,31,37,.74)';
+    mapCtx.fillRect(0, 0, w, h);
+    mapCtx.beginPath(); mapCtx.fillStyle = 'rgba(72,140,121,.38)';
+    mapCtx.ellipse(w * .36, h * .54, 26, 36, -.12, 0, Math.PI * 2); mapCtx.fill();
+    mapCtx.ellipse(w * .64, h * .54, 26, 36, .12, 0, Math.PI * 2); mapCtx.fill();
+    mapCtx.strokeStyle = 'rgba(118,212,182,.68)'; mapCtx.lineWidth = 2;
+    mapCtx.beginPath(); mapCtx.moveTo(w * .5, 10); mapCtx.lineTo(w * .5, 35);
+    mapCtx.lineTo(w * .38, 44); mapCtx.moveTo(w * .5, 35); mapCtx.lineTo(w * .62, 44); mapCtx.stroke();
+    for (let i = 0; i < 5; i++) {
+      mapCtx.fillStyle = 'rgba(152,210,183,.54)';
+      mapCtx.beginPath(); mapCtx.arc(w * (.22 + i * .14), h * (.52 + (i % 2) * .16), 1.7, 0, Math.PI * 2); mapCtx.fill();
+    }
+    const focus = Math.max(0, 1 - state.level * .062);
+    const x = w * (.5 + state.camera.x / 800);
+    const y = h * (.56 + state.camera.y / 500);
+    mapCtx.strokeStyle = '#87e7ca';
+    mapCtx.fillStyle = 'rgba(115,229,193,.14)';
+    mapCtx.lineWidth = 1;
+    mapCtx.beginPath(); mapCtx.arc(x, y, Math.max(4, 17 * focus), 0, Math.PI * 2); mapCtx.fill(); mapCtx.stroke();
+    mapCtx.beginPath(); mapCtx.fillStyle = '#9cf0d8'; mapCtx.arc(x, y, 2, 0, Math.PI * 2); mapCtx.fill();
+    if (state.patrol.active) {
+      const focusX = w * .36;
+      const focusY = h * .54;
+      mapCtx.beginPath();
+      mapCtx.strokeStyle = state.patrol.complete ? '#90edbc' : '#e5b46d';
+      mapCtx.fillStyle = state.patrol.complete ? 'rgba(144,237,188,.1)' : 'rgba(229,180,109,.09)';
+      mapCtx.arc(focusX, focusY, 8, 0, Math.PI * 2);
+      mapCtx.fill();
+      mapCtx.stroke();
+      state.patrol.bacteria.forEach((bacillus) => {
+        mapCtx.beginPath();
+        mapCtx.fillStyle = '#e88a72';
+        mapCtx.arc(focusX + bacillus.x * 72, focusY + bacillus.y * 48, 1.2, 0, Math.PI * 2);
+        mapCtx.fill();
+      });
+      state.patrol.macrophages.forEach((macrophage, index) => {
+        if (!macrophage.alive) return;
+        mapCtx.beginPath();
+        mapCtx.fillStyle = index ? '#b49be2' : '#9cf0d8';
+        mapCtx.arc(focusX + macrophage.x * 72, focusY + macrophage.y * 48, index ? 2 : 2.8, 0, Math.PI * 2);
+        mapCtx.fill();
+      });
+      state.patrol.granulomas.forEach((granuloma) => {
+        mapCtx.beginPath();
+        mapCtx.strokeStyle = 'rgba(204,166,224,.8)';
+        mapCtx.lineWidth = 1.5;
+        mapCtx.arc(focusX + granuloma.x * 72, focusY + granuloma.y * 48, 3 + granuloma.maturity * 5, 0, Math.PI * 2);
+        mapCtx.stroke();
+      });
+    }
+  }
+
+  function getActivePathwayCount() {
+    return state.pathwayActive.filter(Boolean).length;
+  }
+  function getActiveSignalLength() {
+    let activeLength = 0;
+    for (const active of state.pathwayActive) {
+      if (!active) break;
+      activeLength++;
+    }
+    return activeLength;
+  }
+  function canClearIntracellular() {
+    return getActiveSignalLength() === pathwayLabels.length && state.patrol.phageTherapy;
+  }
+  function getCytosolicBacilliCount() {
+    return state.patrol.phagosomes.filter(item => item.location === 'cytosol').length;
+  }
+  function getLiveMacrophageCount() {
+    return state.patrol.initialized
+      ? state.patrol.macrophages.filter(item => item.alive !== false).length
+      : 1;
+  }
+  function getImmuneCellSpawnPoint(index, distance) {
+    const patrol = state.patrol;
+    const target = patrol.bacteria.find(bacillus => !bacillus.netId)
+      || patrol.bacteria[0]
+      || patrol.phagosomes[0]
+      || patrol.macrophages.find(macrophage => macrophage.alive)
+      || { x: 0, y: 0 };
+    const angle = index * 2.399963229728653;
+    return {
+      x: Math.max(-.29, Math.min(.29, target.x + Math.cos(angle) * distance)),
+      y: Math.max(-.29, Math.min(.29, target.y + Math.sin(angle) * distance))
+    };
+  }
+  function deployNETForNeutrophil(unit) {
+    const patrol = state.patrol;
+    const target = patrol.bacteria.find(bacillus => !bacillus.netId
+      && Math.hypot(unit.x - bacillus.x, unit.y - bacillus.y) < .17);
+    if (!target) return false;
+    const net = {
+      id: patrol.nextNetId++, x: target.x, y: target.y, radius: .11,
+      life: 0, duration: 9, phase: Math.random() * Math.PI * 2
+    };
+    patrol.nets.push(net);
+    patrol.bacteria.forEach(bacillus => {
+      if (Math.hypot(bacillus.x - net.x, bacillus.y - net.y) <= net.radius) bacillus.netId = net.id;
+    });
+    unit.netCooldown = net.duration;
+    return true;
+  }
+  function spawnNeutrophil() {
+    if (state.patrol.neutrophils.length >= maxNeutrophils) return false;
+    const position = getImmuneCellSpawnPoint(state.patrol.neutrophils.length, .09);
+    const unit = { ...position, phase: 0, netCooldown: 1 };
+    state.patrol.neutrophils.push(unit);
+    return unit;
+  }
+  function recruitNeutrophils() {
+    if (!state.patrol.initialized || state.patrol.complete) return;
+    const unit = spawnNeutrophil();
+    if (!unit) return;
+    const netDeployed = deployNETForNeutrophil(unit);
+    updateSimulationUi();
+    drawScene();
+    showToast(netDeployed
+      ? 'Neutrófilo recrutado: uma NET temporária aprisiona bacilos próximos, sem garantir sua morte.'
+      : 'Neutrófilo recrutado: pode fagocitar e formar NETs ao alcançar bacilos.');
+  }
+  function recruitPlasmaCells() {
+    if (!state.patrol.initialized || state.patrol.complete || state.patrol.plasmaCells.length >= maxPlasmaCells) return;
+    const position = getImmuneCellSpawnPoint(state.patrol.plasmaCells.length, .045);
+    state.patrol.plasmaCells.push({ ...position, phase: 0 });
+    updateSimulationUi();
+    drawScene();
+    showToast('Plasmócito recrutado: anticorpos podem recrutar complemento no modelo didático.');
+  }
+  function getFocusProgress() {
+    const contained = state.patrol.phagosomes.find(item => item.location !== 'cytosol');
+    return contained ? contained.progress : state.patrol.complete ? 4 : 0;
+  }
+  function getInfectionPhase(progress) {
+    if (progress < 1) return 'Fagossomo';
+    if (progress < 2) return 'Parede';
+    if (progress < 3) return 'Citoplasma';
+    return 'Fagolisossomo';
+  }
+  function getInfectionStageNote() {
+    const view = state.patrol.infectionView;
+    const phagosomeCount = state.patrol.phagosomes.filter(item => item.location !== 'cytosol').length;
+    const cytosolicCount = getCytosolicBacilliCount();
+    const progress = getFocusProgress();
+    const eligible = canClearIntracellular();
+    if (state.patrol.complete) return 'Não restam bacilos neste cenário finito; o resultado é apenas do modelo e não demonstra esterilização pulmonar real.';
+    if (view === 'alveolus') {
+      return phagosomeCount || cytosolicCount
+        ? `${phagosomeCount} bacilo(s) em fagossomos e ${cytosolicCount} no citosol; controle intracelular depende dos módulos e da terapia no modelo, enquanto persistência pode causar dano celular.`
+        : 'Patrulhe o alvéolo e aproxime o macrófago dos bacilos para fagocitá-los.';
+    }
+    if (view === 'phagosome') {
+      return phagosomeCount
+        ? 'O bacilo percorre o compartimento em tráfego vesicular esquemático. Sem controle, pode escapar para o citosol e contribuir para dano celular.'
+        : getCytosolicBacilliCount()
+          ? 'Neste cenário, os bacilos já escaparam do fagossomo; acompanhe o tráfego no citosol do macrófago.'
+        : 'Vista esquemática do bacilo no fagossomo; aproxime um macrófago para criar um compartimento no cenário.';
+    }
+    if (view === 'host-cytosol') {
+      const escaped = getCytosolicBacilliCount();
+      const damage = Math.max(0, ...state.patrol.macrophages.filter(unit => unit.alive).map(unit => unit.damage || 0));
+      if (escaped) return `${escaped} bacilo(s) no citosol do macrófago; dano celular esquemático em ${Math.round(damage * 100)}%. O escape depende do contexto e não implica lise inevitável.`;
+      return phagosomeCount
+        ? 'Bacilos ainda contidos no modelo; tráfego e escape fagossomal podem ocorrer se a infecção persistir sem controle.'
+        : 'Aproxime o macrófago dos bacilos e observe a progressão intracelular. A cena não representa motilidade flagelar.';
+    }
+    if (view === 'granuloma') {
+      const granuloma = state.patrol.granulomas[0];
+      if (!granuloma) return 'Com bacilos presentes, ative TNF, IL-1β ou IL-12 para iniciar a agregação celular esquemática ao redor do foco.';
+      const stage = granuloma.maturity < .3 ? 'recrutamento inicial'
+        : granuloma.maturity < .72 ? 'organização de macrófagos e linfócitos'
+          : 'estrutura organizada no modelo';
+      return `Fase: ${stage}. Granulomas podem conter bacilos ou favorecer persistência; esta secção é um esquema, não um desfecho obrigatório.`;
+    }
+    if (view === 'wall') {
+      if (!eligible) return 'LL-37 só forma poros ilustrativos depois de ativar 7/7 módulos e a terapia fágica; não representa um efeito garantido no patógeno real.';
+      return progress < 1 ? 'Requisitos ativos; maturação didática do fagossomo antes da etapa de permeabilização.' : 'LL-37 pontua a parede neste modelo hipotético; os poros não representam uma previsão experimental.';
+    }
+    if (view === 'cytoplasm') {
+      if (!eligible) return 'A terapia e as sete vias são necessárias neste cenário para mostrar elementos fágicos no citoplasma. A animação não representa virions livres reais.';
+      return progress < 2 ? 'Elementos fágicos aguardam a etapa ilustrativa de permeabilização da parede.' : 'Genomas/elementos fágicos se movem no citoplasma como metáfora visual, não como virions livres.';
+    }
+    if (!eligible) return 'A etapa de fagolisossomo só começa neste cenário após 7/7 módulos e a terapia fágica conceitual.';
+    return progress < 3 ? 'Após parede e citoplasma no modelo, o fagossomo amadurece para a etapa fagolisossomal.' : 'Degradação representada de forma esquemática no fagolisossomo.';
+  }
+  function renderPathwayControls() {
+    const container = document.getElementById('pathway-controls');
+    const activeSignal = getActiveSignalLength();
+    container.innerHTML = pathwayLabels.map((label, index) => {
+      const active = state.pathwayActive[index];
+      const status = !active ? 'Inativo' : index < activeSignal ? 'Sinal transmitido' : 'Aguardando sinal anterior';
+      return `<button class="pathway-control${active ? ' active' : ''}${active && index >= activeSignal ? ' primed' : ''}" type="button" data-pathway-index="${index}" aria-pressed="${active}" title="${pathwayDescriptions[index]}">
+        <span class="pathway-control-name"><i>${String(index + 1).padStart(2, '0')}</i><b>${label}</b></span>
+        <span class="pathway-control-status">${status}</span>
+      </button>`;
+    }).join('');
+    document.getElementById('pathway-activation-count').textContent = `${getActivePathwayCount()}/7`;
+  }
+  function updateSimulationUi() {
+    const patrol = state.patrol;
+    const extracellular = patrol.initialized ? patrol.bacteria.length : initialBacteriaCount;
+    const phagosomeCount = patrol.phagosomes.filter(item => item.location !== 'cytosol').length;
+    const remaining = extracellular + patrol.phagosomes.length;
+    const cytosolicCount = getCytosolicBacilliCount();
+    const liveMacrophages = getLiveMacrophageCount();
+    const macrophageDamage = Math.max(0, ...patrol.macrophages.filter(unit => unit.alive).map(unit => unit.damage || 0));
+    const activeCount = getActivePathwayCount();
+    const signalLength = getActiveSignalLength();
+    const allMacrophagesLysed = patrol.initialized && patrol.lysisCount > 0 && liveMacrophages === 0;
+    const status = patrol.complete ? 'Cenário concluído' : patrol.running ? 'Patrulha em andamento' : patrol.initialized ? 'Patrulha pausada' : 'Pronto para patrulhar';
+    document.getElementById('simulation-status').textContent = status;
+    document.getElementById('simulation-status-dot').classList.toggle('running', patrol.running);
+    document.getElementById('simulation-status-dot').classList.toggle('complete', patrol.complete);
+    document.getElementById('simulation-count').textContent = `${patrol.cleared} / ${initialBacteriaCount}`;
+    document.getElementById('clearance-progress').style.width = `${patrol.cleared / initialBacteriaCount * 100}%`;
+    document.getElementById('coop-count').textContent = `${patrol.playerCount}/3 jogadores`;
+    const playerLabels = ['Jogador 1', 'Jogador 2', 'Jogador 3'];
+    const playerRoles = patrol.playerRoles || ['Macrófago', 'Neutrófilo', 'Lin. B'];
+    document.getElementById('player-controls').innerHTML = Array.from({ length: 3 }, (_, index) => {
+      const available = index < patrol.playerCount;
+      return `<button type="button" class="player-control${available && index === patrol.activePlayer ? ' active' : ''}${available ? '' : ' vacant'}"
+        data-player-index="${index}" ${available ? '' : 'data-add-player="true"'} aria-pressed="${available && index === patrol.activePlayer}">
+        <b>${available ? playerLabels[index] : '+'}</b><small>${available ? playerRoles[index] : 'Adicionar jogador'}</small>
+      </button>`;
+    }).join('');
+    const cytokineActive = patrol.cytokines.filter(item => item.active).length;
+    document.getElementById('cytokine-count').textContent = `${cytokineActive}/5`;
+    document.getElementById('cytokine-controls').innerHTML = patrol.cytokines.map((item, index) =>
+      `<button type="button" class="cytokine-control${item.active ? ' active' : ''}" data-cytokine-index="${index}" aria-pressed="${item.active}" title="${item.role}">${item.name}</button>`).join('');
+    const activeDefenses = patrol.defenses.filter(item => item.active).length;
+    document.getElementById('defense-count').textContent = `${activeDefenses}/${patrol.defenses.length}`;
+    document.getElementById('arsenal-controls').innerHTML = patrol.defenses.map((item, index) =>
+      `<button type="button" class="arsenal-control${item.active ? ' active' : ''}" data-defense-index="${index}" aria-pressed="${item.active}" title="${item.role}">
+        <b>${item.short}</b><small>${item.role}</small>
+      </button>`).join('');
+    const helperCount = patrol.helperT.length;
+    document.getElementById('helper-status').textContent = helperCount
+      ? `T helper automático: ${helperCount} auxiliar(es) sinalizando linfócitos B`
+      : 'T helper: recrutamento automático pela sinalização didática';
+    document.getElementById('team-size').textContent = `${liveMacrophages}/${maxMacrophages}`;
+    document.getElementById('multiply-button').disabled = !patrol.running || liveMacrophages === 0 || liveMacrophages >= maxMacrophages;
+    document.getElementById('restart-infection-button').hidden = !allMacrophagesLysed;
+    document.getElementById('neutrophil-count').textContent = `${patrol.neutrophils.length}/${maxNeutrophils}`;
+    document.getElementById('plasma-cell-count').textContent = `${patrol.plasmaCells.length}/${maxPlasmaCells}`;
+    document.getElementById('recruit-neutrophils-button').disabled = !patrol.initialized || patrol.complete
+      || patrol.neutrophils.length >= maxNeutrophils;
+    document.getElementById('recruit-plasma-button').disabled = !patrol.initialized || patrol.complete
+      || patrol.plasmaCells.length >= maxPlasmaCells;
+    const patrolAction = patrol.complete ? 'Reiniciar cenário' : patrol.running ? 'Pausar patrulha' : patrol.initialized ? 'Retomar patrulha' : 'Iniciar patrulha';
+    document.getElementById('patrol-button').textContent = patrolAction;
+    document.getElementById('patrol-launch-label').textContent = patrolAction === 'Iniciar patrulha' ? 'Iniciar patrulha alveolar' : patrolAction;
+    document.getElementById('patrol-launch-icon').textContent = patrol.complete ? '↻' : patrol.running ? 'Ⅱ' : '▶';
+    document.getElementById('patrol-bacteria-count').textContent = remaining;
+    document.getElementById('patrol-bacteria-label').textContent = remaining === 1 ? 'bacilo no modelo' : 'bacilos no modelo';
+    document.getElementById('extracellular-count').textContent = extracellular;
+    document.getElementById('phagosome-count').textContent = phagosomeCount;
+    document.getElementById('intracellular-count').textContent = cytosolicCount;
+    document.getElementById('granuloma-count').textContent = patrol.granulomas.length;
+    document.getElementById('net-count').textContent = patrol.nets.length;
+    document.getElementById('complement-count').textContent = patrol.complement.length;
+    document.getElementById('macrophage-damage').textContent = `${Math.round(macrophageDamage * 100)}%`;
+    document.getElementById('lysis-count').textContent = patrol.lysisCount;
+    document.getElementById('patrol-cell-count').textContent = liveMacrophages;
+    document.getElementById('patrol-signal-count').textContent = `${signalLength}/7`;
+    document.getElementById('patrol-hud').hidden = !patrol.active;
+    document.getElementById('sterilization-banner').hidden = !(patrol.complete && patrol.active);
+    const controlledRole = patrol.playerRoles ? patrol.playerRoles[patrol.activePlayer] : 'Macrófago';
+    document.getElementById('joystick-hint').textContent = patrol.active ? `JOGADOR ${patrol.activePlayer + 1} · ${controlledRole.toUpperString?.() || controlledRole.toUpperCase()}` : 'MOVER CÂMERA';
+    document.querySelector('.viewer-stage').classList.toggle('patrol-active', patrol.active);
+    const phageButton = document.getElementById('phage-therapy-button');
+    phageButton.setAttribute('aria-pressed', String(patrol.phageTherapy));
+    phageButton.classList.toggle('active', patrol.phageTherapy);
+    phageButton.textContent = patrol.phageTherapy ? 'Desativar' : 'Ativar';
+    document.getElementById('phage-therapy-status').textContent = patrol.phageTherapy
+      ? `${conceptualPhageCount.toLocaleString('pt-BR')} fagos simbólicos · ativa${canClearIntracellular() ? '' : ` · vias ${signalLength}/7`}`
+      : `${conceptualPhageCount.toLocaleString('pt-BR')} fagos simbólicos · inativa`;
+    document.querySelectorAll('[data-infection-view]').forEach((button) => {
+      const active = button.dataset.infectionView === patrol.infectionView;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    const stage = infectionViews.find(item => item.id === patrol.infectionView);
+    document.getElementById('infection-stage-note').textContent = `${stage ? stage.title : 'Infecção'} · ${getInfectionStageNote()}${phagosomeCount ? ` Etapa: ${getInfectionPhase(getFocusProgress())}.` : ''}`;
+
+    let feedback = `Cenário inicial: ${remaining} bacilos esquemáticos. A atividade imune é simplificada para fins de ensino.`;
+    if (patrol.complete) feedback = 'Nenhum bacilo restante neste cenário. Isso não comprova esterilização de um pulmão real.';
+    else if (patrol.running && macrophageDamage > 0) feedback = `${activeCount}/7 módulos ligados; dano celular esquemático ${Math.round(macrophageDamage * 100)}%. Bacilos no citosol podem ser liberados se a célula sofrer ruptura no modelo.`;
+    else if (patrol.running) feedback = `${activeCount}/7 módulos ligados; sinal em cadeia ${signalLength}/7. Bacilos podem trafegar no fagossomo e escapar para o citosol em uma trajetória didática.`;
+    else if (patrol.initialized) feedback = `Cenário pausado com ${remaining} bacilos: ${phagosomeCount} em fagossomos e ${cytosolicCount} no citosol. Os módulos ativados permanecem selecionados.`;
+    document.getElementById('simulation-feedback').textContent = feedback;
+
+    const badge = document.querySelector('.scene-badge');
+    badge.innerHTML = patrol.active && patrol.complete
+      ? '<span></span> MODELO SEM BACILOS'
+      : patrol.active && patrol.infectionView !== 'alveolus'
+        ? `<span></span> ${stage ? stage.title.toUpperCase() : 'INFECÇÃO'} · VISUALIZAÇÃO CONCEITUAL`
+      : patrol.active
+        ? `<span></span> ${patrol.running ? 'PATRULHA EM CURSO' : 'PATRULHA PAUSADA'}`
+        : '<span></span> VISUALIZAÇÃO CONCEITUAL';
+  }
+  function resetPatrol() {
+    state.patrol.initialized = true;
+    state.patrol.complete = false;
+    state.patrol.cleared = 0;
+    state.patrol.phagosomes = [];
+    state.patrol.defenseUnits = [];
+    state.patrol.helperT = [];
+    state.patrol.bCells = [];
+    state.patrol.neutrophils = [];
+    state.patrol.plasmaCells = [];
+    state.patrol.antibodies = [];
+    state.patrol.complement = [];
+    state.patrol.nets = [];
+    state.patrol.nextNetId = 1;
+    state.patrol.deaths = [];
+    state.patrol.spreadSites = [];
+    state.patrol.granulomas = [];
+    state.patrol.spreadTimer = 0;
+    state.patrol.lysisCount = 0;
+    state.patrol.activePlayer = state.patrol.playerCount > 0 ? state.patrol.activePlayer : 0;
+    state.patrol.playerRoles = ['Macrófago', 'Neutrófilo', 'Lin. B'];
+    state.patrol.infectionView = 'alveolus';
+    state.patrol.bacteria = Array.from({ length: initialBacteriaCount }, (_, index) => {
+      const angle = index * 2.399963229728653;
+      const radius = .14 + (index % 5) * .035;
+      return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, progress: 0 };
+    });
+    state.patrol.macrophages = [{ x: 0, y: 0, phase: 0, damage: 0, alive: true, founder: true }];
+  }
+  function startOrPausePatrol() {
+    if (state.patrol.running) {
+      state.patrol.running = false;
+      updateSimulationUi();
+      showToast('Patrulha pausada; o cenário e as vias selecionadas foram mantidos.');
+      return;
+    }
+    if (!state.patrol.initialized || state.patrol.complete) resetPatrol();
+    state.patrol.active = true;
+    state.patrol.running = true;
+    state.level = 3;
+    state.topic = 'scene';
+    state.camera = { x: 0, y: 0 };
+    renderInfo();
+    showToast('Patrulha alveolar iniciada. Use WASD ou o joystick para conduzir o macrófago.');
+  }
+  function restartAfterMacrophageLysis() {
+    const liveMacrophages = state.patrol.macrophages.filter(item => item.alive).length;
+    if (!state.patrol.lysisCount || liveMacrophages) return;
+    resetPatrol();
+    state.patrol.active = true;
+    state.patrol.running = true;
+    state.level = 3;
+    state.topic = 'scene';
+    state.camera = { x: 0, y: 0 };
+    renderInfo();
+    showToast('Infecção reiniciada com um novo macrófago alveolar; as vias selecionadas foram mantidas.');
+  }
+  function expandMacrophageTeam() {
+    const team = state.patrol.macrophages;
+    const liveCount = getLiveMacrophageCount();
+    if (!state.patrol.running || liveCount >= maxMacrophages) return;
+    const leader = team.find(unit => unit.alive);
+    const anchor = team.find(unit => unit.alive && unit.founder) || leader;
+    const parent = team.find(unit => unit.alive && typeof unit.mitosisProgress !== 'number') || leader;
+    const angle = liveCount * 2.399963229728653;
+    const distance = .085 + Math.floor(Math.max(0, liveCount - 1) / 6) * .065;
+    const newMacrophage = anchor
+      ? {
+          x: Math.max(-.29, Math.min(.29, anchor.x + Math.cos(angle) * distance)),
+          y: Math.max(-.29, Math.min(.29, anchor.y + Math.sin(angle) * distance)),
+          phase: angle, damage: 0, alive: true, founder: false, birthProgress: 0, mitosisEffect: 1
+        }
+      : { x: 0, y: 0, phase: angle, damage: 0, alive: true, founder: true, birthProgress: 0, mitosisEffect: 1 };
+    if (parent) parent.mitosisProgress = 0;
+    const deadSlot = team.findIndex(unit => !unit.alive);
+    if (deadSlot >= 0) team[deadSlot] = newMacrophage;
+    else team.push(newMacrophage);
+    updateSimulationUi();
+    drawScene();
+    showToast('Mitose esquemática: uma célula-filha está se separando. A divisão de macrófagos depende do contexto biológico.');
+  }
+  function togglePathwayModule(index) {
+    state.pathwayActive[index] = !state.pathwayActive[index];
+    renderPathwayControls();
+    updateSimulationUi();
+    if (state.patrol.active) {
+      drawScene();
+      drawMinimap();
+    }
+    showToast(`${pathwayLabels[index]} ${state.pathwayActive[index] ? 'ativado no modelo' : 'desativado no modelo'}.`);
+  }
+  function toggleMacrophageDefense(index) {
+    const module = state.patrol.defenses[index];
+    if (!module) return;
+    module.active = !module.active;
+    updateSimulationUi();
+    drawScene();
+    showToast(`${module.name} ${module.active ? 'destacada' : 'desativada'} no modelo conceitual.`);
+  }
+  function togglePhageTherapy() {
+    state.patrol.phageTherapy = !state.patrol.phageTherapy;
+    updateSimulationUi();
+    drawScene();
+    showToast(state.patrol.phageTherapy
+      ? 'Terapia fágica simbólica ativada no cenário; não representa eficácia terapêutica real.'
+      : 'Terapia fágica simbólica desativada.');
+  }
+  function selectInfectionView(view) {
+    if (!infectionViews.some(item => item.id === view)) return;
+    state.patrol.active = true;
+    state.patrol.infectionView = view;
+    state.level = 3;
+    state.topic = 'scene';
+    state.camera = { x: 0, y: 0 };
+    renderInfo();
+  }
+  function updatePatrol(deltaTime, directionX, directionY) {
+    const patrol = state.patrol;
+    if (!patrol.running) return false;
+    let changed = false;
+    const magnitude = Math.hypot(directionX, directionY);
+    if (magnitude > 0) {
+      const xStep = directionX / magnitude * deltaTime * .36;
+      const yStep = directionY / magnitude * deltaTime * .36;
+      const constrain = (unit) => {
+        unit.x += xStep;
+        unit.y += yStep;
+        const distance = Math.hypot(unit.x, unit.y);
+        if (distance > .31) {
+          unit.x *= .31 / distance;
+          unit.y *= .31 / distance;
+        }
+      };
+      if (patrol.activePlayer === 0) patrol.macrophages.filter(unit => unit.alive).forEach(constrain);
+      else if (patrol.activePlayer === 1) patrol.neutrophils.forEach(constrain);
+      else {
+        patrol.bCells.forEach(constrain);
+        patrol.plasmaCells.forEach(constrain);
+      }
+      changed = true;
+    }
+    if (getLiveMacrophageCount() || patrol.neutrophils.length || patrol.helperT.length
+      || patrol.bCells.length || patrol.plasmaCells.length) {
+      patrol.macrophages.filter(unit => unit.alive).forEach(unit => {
+        unit.phase += deltaTime * .35;
+        if (typeof unit.mitosisProgress === 'number') {
+          unit.mitosisProgress = Math.min(1, unit.mitosisProgress + deltaTime * .42);
+          if (unit.mitosisProgress >= 1) delete unit.mitosisProgress;
+          changed = true;
+        }
+        if (typeof unit.birthProgress === 'number') {
+          unit.birthProgress = Math.min(1, unit.birthProgress + deltaTime * .42);
+          if (unit.birthProgress >= 1) delete unit.birthProgress;
+          changed = true;
+        }
+        if (typeof unit.mitosisEffect === 'number') {
+          unit.mitosisEffect = Math.max(0, unit.mitosisEffect - deltaTime * .14);
+          if (unit.mitosisEffect === 0) delete unit.mitosisEffect;
+          changed = true;
+        }
+      });
+      patrol.neutrophils.forEach(unit => { unit.phase += deltaTime * 1.1; });
+      patrol.helperT.forEach(unit => { unit.phase += deltaTime * .8; });
+      patrol.plasmaCells.forEach(unit => { unit.phase += deltaTime * .7; });
+      changed = true;
+    }
+
+    patrol.nets.forEach(net => {
+      net.life += deltaTime;
+      net.phase += deltaTime * .2;
+      changed = true;
+    });
+    const activeNetIds = new Set(patrol.nets.filter(net => net.life < net.duration).map(net => net.id));
+    if (activeNetIds.size !== patrol.nets.length) {
+      patrol.nets = patrol.nets.filter(net => net.life < net.duration);
+      patrol.bacteria.forEach(bacillus => {
+        if (bacillus.netId && !activeNetIds.has(bacillus.netId)) delete bacillus.netId;
+      });
+      changed = true;
+      updateSimulationUi();
+    }
+    let netDeployed = false;
+    patrol.neutrophils.forEach(unit => {
+      unit.netCooldown = Math.max(0, (unit.netCooldown || 0) - deltaTime);
+      if (unit.netCooldown > 0) return;
+      if (!deployNETForNeutrophil(unit)) {
+        unit.netCooldown = 2;
+        return;
+      }
+      netDeployed = true;
+      changed = true;
+    });
+    if (netDeployed) {
+      updateSimulationUi();
+      showToast('NET esquemática formada: aprisiona bacilos próximos e reduz sua dispersão; não implica morte bacteriana.');
+    }
+
+    patrol.spreadTimer += deltaTime;
+    const untrappedBacteria = patrol.bacteria.filter(bacillus => !bacillus.netId);
+    if (patrol.spreadTimer > 12 && untrappedBacteria.length > 2) {
+      patrol.spreadTimer = 0;
+      const source = untrappedBacteria[Math.floor(Math.random() * untrappedBacteria.length)];
+      const angle = Math.random() * Math.PI * 2;
+      const distance = .11 + Math.random() * .09;
+      const newX = Math.max(-.29, Math.min(.29, source.x + Math.cos(angle) * distance));
+      const newY = Math.max(-.29, Math.min(.29, source.y + Math.sin(angle) * distance));
+      patrol.spreadSites.push({ x: newX, y: newY, age: 0 });
+      patrol.bacteria.push({ x: newX, y: newY, progress: 0, spread: true });
+      changed = true;
+      updateSimulationUi();
+      showToast('Infecção modelada: novo foco bacteriano apareceu em outro ponto do alvéolo.');
+    }
+
+    const cytokineCount = patrol.cytokines.filter(item => item.active).length;
+    if (cytokineCount >= 1 && patrol.helperT.length === 0) {
+      patrol.helperT.push({ x: -.18, y: -.12, phase: 0 });
+      changed = true;
+      updateSimulationUi();
+    }
+    if (cytokineCount >= 1 && patrol.bCells.length === 0 && patrol.playerCount >= 3) {
+      patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+      changed = true;
+    }
+    if (patrol.cytokines.find(item => item.name === 'CXCL8' && item.active)) {
+      if (patrol.neutrophils.length === 0 && spawnNeutrophil()) {
+        changed = true;
+        updateSimulationUi();
+      }
+    }
+    if (patrol.cytokines.find(item => item.name === 'IL-12' && item.active)) {
+      if (patrol.bCells.length === 0) patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+    }
+
+    const captured = [];
+    patrol.bacteria.forEach((bacillus, index) => {
+      const cellIndex = patrol.macrophages.findIndex((macrophage) =>
+        macrophage.alive && Math.hypot(macrophage.x - bacillus.x, macrophage.y - bacillus.y) < .063);
+      if (cellIndex >= 0) {
+        captured.push({ index, cellIndex, bacillus });
+      }
+    });
+    for (let index = captured.length - 1; index >= 0; index--) {
+      const item = captured[index];
+      patrol.bacteria.splice(item.index, 1);
+      patrol.phagosomes.push({
+        x: item.bacillus.x, y: item.bacillus.y, cellIndex: item.cellIndex, progress: 0,
+        phase: Math.random() * Math.PI * 2, escapeProgress: 0, replicationTimer: 0, location: 'phagosome'
+      });
+      changed = true;
+    }
+    if (captured.length) {
+      updateSimulationUi();
+      showToast(`${captured.length} bacilo(s) internalizado(s); permanecem retidos em fagossomos.`);
+    }
+
+    patrol.bCells.forEach((bCell) => {
+      const nearHelper = patrol.helperT.some(helper => Math.hypot(helper.x - bCell.x, helper.y - bCell.y) < .075);
+      if (nearHelper && patrol.plasmaCells.length < maxPlasmaCells) {
+        const index = patrol.bCells.indexOf(bCell);
+        if (index >= 0) {
+          patrol.bCells.splice(index, 1);
+          patrol.plasmaCells.push({ x: bCell.x, y: bCell.y, phase: 0 });
+          for (let i = 0; i < 5; i++) patrol.antibodies.push({
+            x: bCell.x + (i - 2) * .018,
+            y: bCell.y + Math.sin(i) * .018,
+            phase: i * .7
+          });
+          changed = true;
+          showToast('T helper auxiliou este linfócito B; o linfócito se transformou em plasmócito esquemático.');
+        }
+      }
+    });
+
+    if (patrol.plasmaCells.length) {
+      if (patrol.antibodies.length < 20) {
+        patrol.plasmaCells.forEach(plasma => {
+          if (patrol.antibodies.length >= 20) return;
+          patrol.antibodies.push({
+            x: plasma.x + (Math.random() - .5) * .06,
+            y: plasma.y + (Math.random() - .5) * .06,
+            phase: Math.random() * Math.PI * 2
+          });
+        });
+      }
+      patrol.antibodies.forEach((antibody) => {
+        antibody.phase += deltaTime;
+        antibody.x += Math.sin(antibody.phase) * deltaTime * .004;
+        antibody.y += Math.cos(antibody.phase * .7) * deltaTime * .004;
+      });
+      if (patrol.antibodies.some(antibody =>
+        patrol.bacteria.some(bacillus => Math.hypot(antibody.x - bacillus.x, antibody.y - bacillus.y) < .055))) {
+        if (patrol.complement.length < 18) {
+          const antibody = patrol.antibodies.find(item =>
+            patrol.bacteria.some(bacillus => Math.hypot(item.x - bacillus.x, item.y - bacillus.y) < .055));
+          patrol.complement.push({ x: antibody.x, y: antibody.y, phase: Math.random() * Math.PI * 2 });
+        }
+      }
+    }
+
+    patrol.complement.forEach(unit => { unit.phase += deltaTime * 1.5; });
+
+    const oxidativeActive = patrol.defenses.some(module =>
+      (module.id === 'ros' || module.id === 'rns') && module.active);
+    const extracellularRemoved = [];
+    patrol.bacteria.forEach((bacillus, index) => {
+      const byNeutrophil = patrol.neutrophils.some(unit =>
+        Math.hypot(unit.x - bacillus.x, unit.y - bacillus.y) < .055);
+      const byMacComplex = patrol.complement.some(unit =>
+        Math.hypot(unit.x - bacillus.x, unit.y - bacillus.y) < .052);
+      const byMacrophageOxidativeBurst = oxidativeActive && patrol.macrophages.some(unit =>
+        unit.alive && Math.hypot(unit.x - bacillus.x, unit.y - bacillus.y) < .05);
+      if (byNeutrophil || byMacComplex || byMacrophageOxidativeBurst) extracellularRemoved.push({
+        index,
+        bacillus,
+        type: byMacComplex ? 'osmotic' : byMacrophageOxidativeBurst ? 'oxidative' : byNeutrophil ? 'neutrophil' : 'peptide'
+      });
+    });
+    for (let i = extracellularRemoved.length - 1; i >= 0; i--) {
+      const item = extracellularRemoved[i];
+      patrol.bacteria.splice(item.index, 1);
+      patrol.cleared++;
+      patrol.deaths.push({
+        x: item.bacillus.x,
+        y: item.bacillus.y,
+        type: item.type,
+        life: 0
+      });
+      changed = true;
+    }
+    if (extracellularRemoved.length) {
+      updateSimulationUi();
+      showToast(extracellularRemoved.some(item => item.type === 'osmotic')
+        ? 'O complexo lítico esquemático produziu lise osmótica.'
+        : extracellularRemoved.some(item => item.type === 'neutrophil')
+          ? 'Fagocitose neutrofílica esquemática: remoção idealizada de bacilos extracelulares.'
+          : 'Peptídeos antimicrobianos esquemáticos produziram lise bacteriana.');
+    }
+
+    patrol.deaths.forEach(death => { death.life += deltaTime * .7; });
+    patrol.deaths = patrol.deaths.filter(death => death.life < 1);
+
+    let phaseChanged = false;
+    const protectionModules = patrol.defenses.filter(module =>
+      module.active && ['ifng', 'acidification', 'lap', 'xenophagy', 'ros', 'rns'].includes(module.id)).length;
+    const protection = Math.min(1, protectionModules / 5 * .7 + getActiveSignalLength() / pathwayLabels.length * .3);
+    const replicationEvents = [];
+    patrol.phagosomes.forEach((phagosome) => {
+      phagosome.phase += deltaTime * (phagosome.location === 'cytosol' ? 1.7 : .9);
+      if (canClearIntracellular()) {
+        const priorPhase = getInfectionPhase(phagosome.progress);
+        const defenseBoost = patrol.defenses.reduce((total, module) =>
+          total + (module.active && ['acidification', 'lap', 'xenophagy', 'ifng'].includes(module.id) ? .035 : 0), 0);
+        phagosome.progress = Math.min(4, phagosome.progress + deltaTime * (.22 + defenseBoost));
+        if (getInfectionPhase(phagosome.progress) !== priorPhase) {
+          changed = true;
+          phaseChanged = true;
+        }
+      } else if (phagosome.location === 'phagosome') {
+        phagosome.escapeProgress = Math.min(1, phagosome.escapeProgress + deltaTime * (.055 * (1 - protection * .68)));
+        if (phagosome.escapeProgress >= 1) {
+          phagosome.location = 'cytosol';
+          changed = true;
+          phaseChanged = true;
+          showToast('Um bacilo escapou do fagossomo no modelo; o tráfego citosólico é esquemático.');
+        }
+      } else {
+        const sameCell = patrol.phagosomes.filter(item => item.cellIndex === phagosome.cellIndex);
+        phagosome.replicationTimer += deltaTime;
+        if (sameCell.length < 4 && phagosome.replicationTimer >= 8) {
+          phagosome.replicationTimer = 0;
+          replicationEvents.push({
+            x: phagosome.x, y: phagosome.y, cellIndex: phagosome.cellIndex, progress: 0,
+            phase: Math.random() * Math.PI * 2, escapeProgress: 1, replicationTimer: 0, location: 'cytosol'
+          });
+        }
+      }
+      changed = true;
+    });
+    if (replicationEvents.length) {
+      patrol.phagosomes.push(...replicationEvents);
+      phaseChanged = true;
+    }
+
+    const lysedCells = [];
+    patrol.macrophages.forEach((macrophage, index) => {
+      if (!macrophage.alive) return;
+      const cytosolicLoad = patrol.phagosomes.filter(item => item.cellIndex === index && item.location === 'cytosol').length;
+      if (!cytosolicLoad || canClearIntracellular()) return;
+      const priorDamage = macrophage.damage || 0;
+      macrophage.damage = Math.min(1, (macrophage.damage || 0)
+        + deltaTime * (.055 + Math.max(0, cytosolicLoad - 1) * .022) * (1 - protection * .48));
+      changed = true;
+      if (Math.floor(priorDamage * 100) !== Math.floor(macrophage.damage * 100)) phaseChanged = true;
+      if (macrophage.damage >= 1) lysedCells.push({ macrophage, index });
+    });
+    lysedCells.forEach(({ macrophage, index }) => {
+      const released = patrol.phagosomes.filter(item => item.cellIndex === index);
+      patrol.phagosomes = patrol.phagosomes.filter(item => item.cellIndex !== index);
+      released.forEach((item, releasedIndex) => {
+        const angle = releasedIndex * 2.4 + macrophage.phase;
+        patrol.bacteria.push({
+          x: Math.max(-.29, Math.min(.29, macrophage.x + Math.cos(angle) * .035)),
+          y: Math.max(-.29, Math.min(.29, macrophage.y + Math.sin(angle) * .035)),
+          progress: 0, released: true
+        });
+      });
+      macrophage.alive = false;
+      patrol.lysisCount++;
+      patrol.deaths.push({ x: macrophage.x, y: macrophage.y, type: 'macrophage-lysis', life: 0 });
+      changed = true;
+      phaseChanged = true;
+      showToast(`${released.length} bacilo(s) foram liberados após ruptura celular no cenário didático.`);
+    });
+
+    const inflammatorySignal = patrol.cytokines.some(item =>
+      item.active && ['TNF', 'IL-1β', 'IL-12'].includes(item.name));
+    if (inflammatorySignal && (patrol.bacteria.length || patrol.phagosomes.length) && !patrol.granulomas.length) {
+      const infectedCell = patrol.macrophages.find((macrophage, index) =>
+        macrophage.alive && patrol.phagosomes.some(item => item.cellIndex === index));
+      const seed = infectedCell || patrol.bacteria[0] || { x: 0, y: 0 };
+      patrol.granulomas.push({ x: seed.x, y: seed.y, maturity: 0, phase: 0 });
+      showToast('Sinais inflamatórios iniciaram um agregado celular esquemático ao redor do foco.');
+      phaseChanged = true;
+    }
+    patrol.granulomas.forEach(granuloma => {
+      const signalCount = patrol.cytokines.filter(item => item.active).length;
+      const priorStage = granuloma.maturity < .3 ? 0 : granuloma.maturity < .72 ? 1 : 2;
+      granuloma.maturity = Math.min(1, granuloma.maturity + deltaTime * (.012 + Math.min(signalCount, 3) * .006));
+      granuloma.phase += deltaTime * .4;
+      const nextStage = granuloma.maturity < .3 ? 0 : granuloma.maturity < .72 ? 1 : 2;
+      if (priorStage !== nextStage) phaseChanged = true;
+      changed = true;
+    });
+    if (phaseChanged) updateSimulationUi();
+    const removed = patrol.phagosomes.filter(item => item.progress >= 4).length;
+    if (removed) {
+      patrol.phagosomes.filter(item => item.progress >= 4).forEach(item => {
+        patrol.deaths.push({ x: item.x, y: item.y, type: 'phagolysosome', life: 0 });
+      });
+      patrol.phagosomes = patrol.phagosomes.filter(item => item.progress < 4);
+      patrol.cleared += removed;
+      changed = true;
+      updateSimulationUi();
+      showToast(`${removed} bacilo(s) degradado(s) após as etapas intracelulares do modelo.`);
+    }
+    if (!patrol.bacteria.length && !patrol.phagosomes.length && patrol.initialized) {
+      patrol.running = false;
+      patrol.complete = true;
+      updateSimulationUi();
+      showToast('Cenário concluído: não restam bacilos no modelo, sem implicar esterilização real.');
+    }
+    return changed;
+  }
+
+  function renderInfo() {
+    const level = levels[state.level];
+    const concept = concepts[state.topic];
+    document.getElementById('top-level-name').textContent = level.name;
+    document.getElementById('crumb-level').textContent = level.name;
+    const infectionStage = infectionViews.find(item => item.id === state.patrol.infectionView);
+    document.getElementById('scene-title').textContent = state.patrol.active
+      ? infectionStage ? infectionStage.title : 'Patrulha alveolar'
+      : state.topic === 'scene' ? level.title : concept.title;
+    document.getElementById('scene-subtitle').textContent = state.patrol.active
+      ? infectionStage ? infectionStage.description : 'Conduza o macrófago pelo espaço aéreo e acompanhe a depuração no modelo.'
+      : state.topic === 'scene' ? level.subtitle : concept.description.split('.')[0] + '.';
+    document.getElementById('scale-exponent').textContent = level.scale;
+    document.getElementById('map-level').textContent = state.level === 0 ? 'Pulmão inteiro' : level.name;
+    document.getElementById('hierarchy-count').textContent = `${String(state.level + 1).padStart(2, '0')} / ${levels.length}`;
+    document.getElementById('zoom-meter-fill').style.height = `${Math.max(8, (state.level + 1) / levels.length * 100)}%`;
+    document.getElementById('info-icon').textContent = state.topic === 'scene' ? '◉' : concept.icon;
+    document.getElementById('info-category').textContent = state.topic === 'scene' ? level.category : 'ENCICLOPÉDIA · MÓDULO TEMÁTICO';
+    document.getElementById('info-title').textContent = state.topic === 'scene' ? level.name : concept.title;
+    document.getElementById('info-description').textContent = state.topic === 'scene' ? levelNotes[state.level] : concept.description;
+
+    const focusTitle = state.topic === 'scene' ? (state.level === 0 ? 'Uma jornada entre escalas' : `Estruturas em ${level.name}`) : concept.focusTitle;
+    const focusText = state.topic === 'scene' ? (state.level === 0 ? concepts.scene.focusText : levelNotes[state.level]) : concept.focusText;
+    const tags = state.topic === 'scene' ? featureTags[state.level] : concept.tags;
+    document.getElementById('focus-card').innerHTML = `<strong>${focusTitle}</strong><span>${focusText}</span><div class="focus-tags">${tags.map(tag => `<span>${tag}</span>`).join('')}</div>`;
+    document.getElementById('pathway-steps').innerHTML = pathwayLabels.map((label, index) => `<span class="pathway-step">${label}</span>${index < pathwayLabels.length - 1 ? '<span class="pathway-arrow">›</span>' : ''}`).join('');
+    renderPathwayControls();
+    updateSimulationUi();
+    levelTrack.querySelectorAll('.hierarchy-node').forEach((node, index) => {
+      node.classList.toggle('active', index === state.level);
+      node.classList.toggle('visited', index < state.level);
+      if (index === state.level) node.setAttribute('aria-current', 'step');
+      else node.removeAttribute('aria-current');
+    });
+    const activeRailTopic = state.topic === 'scene' ? 'scene' : state.topic;
+    document.querySelectorAll('.rail-link').forEach(link => link.classList.toggle('active', link.dataset.topic === activeRailTopic));
+    drawScene();
+    drawMinimap();
+  }
+
+  function setLevel(value) {
+    if (state.patrol.active) {
+      state.patrol.active = false;
+      state.patrol.running = false;
+    }
+    state.level = Math.max(0, Math.min(levels.length - 1, Math.round(value)));
+    renderInfo();
+  }
+  function setTopic(topic) {
+    if (!concepts[topic]) return;
+    if (state.patrol.active) {
+      state.patrol.active = false;
+      state.patrol.running = false;
+    }
+    state.topic = topic;
+    if (topic === 'scene') state.camera = { x: 0, y: 0 };
+    renderInfo();
+  }
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+  function createHierarchy() {
+    levels.forEach((level, index) => {
+      const node = document.createElement('button');
+      node.type = 'button';
+      node.className = 'hierarchy-node';
+      node.title = `Explorar ${level.name}`;
+      node.setAttribute('aria-label', `Nível ${index + 1}: ${level.name}`);
+      node.innerHTML = `<span class="node-dot"></span><span class="node-label">${level.short}</span>`;
+      node.addEventListener('click', () => { setLevel(index); setTopic('scene'); });
+      levelTrack.appendChild(node);
+    });
+  }
+  function exportImage(type) {
+    const output = document.createElement('canvas');
+    output.width = sceneCanvas.width;
+    output.height = sceneCanvas.height;
+    const out = output.getContext('2d');
+    out.fillStyle = '#07131c';
+    out.fillRect(0, 0, output.width, output.height);
+    out.drawImage(sceneCanvas, 0, 0);
+    out.drawImage(overlayCanvas, 0, 0);
+    out.fillStyle = 'rgba(8,21,28,.76)';
+    out.fillRect(14 * dpr, output.height - 34 * dpr, 290 * dpr, 22 * dpr);
+    out.fillStyle = '#c9e6dc';
+    out.font = `${10 * dpr}px "Segoe UI", Arial, sans-serif`;
+    out.fillText(`Estudo Biomédico · ${levels[state.level].title} · visualização conceitual`, 21 * dpr, output.height - 20 * dpr);
+    output.toBlob((blob) => {
+      if (!blob) { showToast('Não foi possível gerar a figura neste navegador.'); return; }
+      const extension = type === 'image/jpeg' ? 'jpg' : 'png';
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `estudo-biomedico-${levels[state.level].short.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${extension}`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      showToast(`Figura ${extension.toUpperCase()} exportada.`);
+    }, type, type === 'image/jpeg' ? .94 : undefined);
+  }
+
+  createHierarchy();
+  resetParticles();
+  resize();
+  renderInfo();
+  window.addEventListener('resize', resize);
+  const movementKeys = new Map([
+    ['KeyW', 'up'], ['ArrowUp', 'up'],
+    ['KeyA', 'left'], ['ArrowLeft', 'left'],
+    ['KeyS', 'down'], ['ArrowDown', 'down'],
+    ['KeyD', 'right'], ['ArrowRight', 'right']
+  ]);
+  function isTypingTarget(target) {
+    return target instanceof Element && (target.matches('input, textarea, select')
+      || target.isContentEditable);
+  }
+  document.addEventListener('keydown', (event) => {
+    const movement = movementKeys.get(event.code);
+    if (movement && !isTypingTarget(event.target)) {
+      event.preventDefault();
+      state.keys.add(movement);
+    } else if (event.key === '+' || event.key === '=') setLevel(state.level + 1);
+    else if (event.key === '-' || event.key === '_') setLevel(state.level - 1);
+    else if (event.key === 'Escape') document.querySelector('.info-panel').classList.remove('open');
+  }, { capture: true });
+  document.addEventListener('keyup', (event) => {
+    const movement = movementKeys.get(event.code);
+    if (movement) state.keys.delete(movement);
+  }, { capture: true });
+  window.addEventListener('blur', () => state.keys.clear());
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      state.keys.clear();
+      state.joy.x = 0;
+      state.joy.y = 0;
+    }
+  });
+  document.getElementById('zoom-in').addEventListener('click', () => setLevel(state.level + 1));
+  document.getElementById('zoom-out').addEventListener('click', () => setLevel(state.level - 1));
+  sceneCanvas.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    setLevel(state.level + (event.deltaY < 0 ? 1 : -1));
+  }, { passive: false });
+  document.getElementById('particles-button').addEventListener('click', () => {
+    state.particles = !state.particles;
+    document.getElementById('particles-label').textContent = state.particles ? 'Partículas ativas' : 'Partículas pausadas';
+    document.querySelector('.tool-dot').style.background = state.particles ? 'var(--mint)' : '#76868a';
+    showToast(state.particles ? 'Partículas reativadas.' : 'Partículas pausadas.');
+  });
+  document.getElementById('patrol-button').addEventListener('click', startOrPausePatrol);
+  document.getElementById('patrol-launch-button').addEventListener('click', startOrPausePatrol);
+  document.getElementById('multiply-button').addEventListener('click', expandMacrophageTeam);
+  document.getElementById('recruit-neutrophils-button').addEventListener('click', recruitNeutrophils);
+  document.getElementById('recruit-plasma-button').addEventListener('click', recruitPlasmaCells);
+  document.getElementById('restart-infection-button').addEventListener('click', restartAfterMacrophageLysis);
+  document.getElementById('player-controls').addEventListener('click', (event) => {
+    const control = event.target.closest('[data-player-index]');
+    if (!control) return;
+    const index = Number(control.dataset.playerIndex);
+    if (control.dataset.addPlayer === 'true') {
+      if (index + 1 > state.patrol.playerCount) state.patrol.playerCount = index + 1;
+      state.patrol.activePlayer = index;
+      if (state.patrol.playerCount >= 2 && state.patrol.neutrophils.length === 0) {
+        spawnNeutrophil();
+      }
+      if (state.patrol.playerCount >= 3 && state.patrol.bCells.length === 0) {
+        state.patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+      }
+      showToast(`${state.patrol.playerRoles[index]} associado ao jogador ${index + 1}.`);
+    } else {
+      state.patrol.activePlayer = index;
+      showToast(`Controle transferido para ${state.patrol.playerRoles[index]}.`);
+    }
+    updateSimulationUi();
+  });
+  document.getElementById('cytokine-controls').addEventListener('click', (event) => {
+    const control = event.target.closest('[data-cytokine-index]');
+    if (!control) return;
+    const index = Number(control.dataset.cytokineIndex);
+    const cytokine = state.patrol.cytokines[index];
+    cytokine.active = !cytokine.active;
+    if (cytokine.active) {
+      if (cytokine.name === 'IL-12' && state.patrol.bCells.length === 0) {
+        state.patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+      }
+      if (cytokine.name === 'CXCL8' && state.patrol.neutrophils.length === 0) {
+        spawnNeutrophil();
+      }
+      if (state.patrol.helperT.length === 0) state.patrol.helperT.push({ x: -.18, y: -.12, phase: 0 });
+    }
+    updateSimulationUi();
+    drawScene();
+    showToast(`${cytokine.name} ${cytokine.active ? 'ativada' : 'desativada'} no modelo didático.`);
+  });
+  document.getElementById('arsenal-controls').addEventListener('click', (event) => {
+    const control = event.target.closest('[data-defense-index]');
+    if (control) toggleMacrophageDefense(Number(control.dataset.defenseIndex));
+  });
+  document.getElementById('phage-therapy-button').addEventListener('click', togglePhageTherapy);
+  document.getElementById('infection-view-tabs').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-infection-view]');
+    if (button) selectInfectionView(button.dataset.infectionView);
+  });
+  document.getElementById('pathway-controls').addEventListener('click', (event) => {
+    const control = event.target.closest('[data-pathway-index]');
+    if (control) togglePathwayModule(Number(control.dataset.pathwayIndex));
+  });
+  document.getElementById('export-button').addEventListener('click', (event) => {
+    event.stopPropagation();
+    const menu = document.getElementById('export-menu');
+    menu.hidden = !menu.hidden;
+    event.currentTarget.setAttribute('aria-expanded', String(!menu.hidden));
+  });
+  document.querySelectorAll('[data-export]').forEach((button) => {
+    button.addEventListener('click', () => {
+      exportImage(button.dataset.export);
+      document.getElementById('export-menu').hidden = true;
+      document.getElementById('export-button').setAttribute('aria-expanded', 'false');
+    });
+  });
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.toolbar-actions')) {
+      document.getElementById('export-menu').hidden = true;
+      document.getElementById('export-button').setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.getElementById('minimap-toggle').addEventListener('click', () => {
+    const card = document.querySelector('.minimap-card');
+    card.classList.toggle('collapsed');
+    document.getElementById('minimap-toggle').textContent = card.classList.contains('collapsed') ? '+' : '−';
+  });
+  minimap.addEventListener('pointerdown', (event) => {
+    const rect = minimap.getBoundingClientRect();
+    state.camera.x = (event.clientX - rect.left - rect.width / 2) * 2.3;
+    state.camera.y = (event.clientY - rect.top - rect.height / 2) * 2.0;
+    drawScene(); drawMinimap();
+  });
+  document.querySelectorAll('[data-topic]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setTopic(button.dataset.topic);
+      if (window.innerWidth <= 900) document.querySelector('.info-panel').classList.add('open');
+    });
+  });
+  document.getElementById('help-button').addEventListener('click', () => {
+    document.querySelector('.info-panel').classList.add('open');
+    setTopic('scene');
+    showToast('Role para mudar a escala; arraste o joystick ou use WASD para navegar e patrulhar.');
+  });
+  const installButton = document.getElementById('install-button');
+  const installButtonLabel = document.getElementById('install-button-label');
+  let installPromptEvent = null;
+  const shareDialog = document.getElementById('share-dialog');
+  const shareUrlInput = document.getElementById('share-url');
+  const installHelpDialog = document.getElementById('install-help-dialog');
+  const androidDevice = /Android/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  installButtonLabel.textContent = androidDevice ? 'Instalar app' : 'Instalar no PC';
+  if (window.isSecureContext && !isStandalone) installButton.hidden = false;
+  function showInstallInstructions() {
+    const instructions = androidDevice
+      ? 'No Chrome ou Samsung Internet, abra o menu ⋮ e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”. O simulador precisa estar publicado em HTTPS.'
+      : 'No Chrome ou Edge, use o ícone de instalação na barra de endereços ou abra o menu do navegador e escolha “Instalar Estudo Biomédico”. O site precisa estar publicado em HTTPS ou aberto em localhost.';
+    document.getElementById('install-help-text').textContent = instructions;
+    installHelpDialog.showModal();
+  }
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    installPromptEvent = event;
+    installButton.hidden = false;
+  });
+  installButton.addEventListener('click', async () => {
+    if (!installPromptEvent) {
+      showInstallInstructions();
+      return;
+    }
+    installButton.disabled = true;
+    try {
+      await installPromptEvent.prompt();
+      const choice = await installPromptEvent.userChoice;
+      if (choice.outcome === 'accepted') showToast('Aplicativo instalado. Você pode abri-lo pelo menu Iniciar.');
+      if (choice.outcome === 'accepted') installButton.hidden = true;
+      installPromptEvent = null;
+    } catch (error) {
+      console.error('Não foi possível iniciar a instalação do aplicativo:', error);
+      showToast('Não foi possível abrir a instalação. Tente pelo menu do navegador.');
+    } finally {
+      installButton.disabled = false;
+    }
+  });
+  document.getElementById('install-help-close').addEventListener('click', () => installHelpDialog.close());
+  window.addEventListener('appinstalled', () => {
+    installButton.hidden = true;
+    installPromptEvent = null;
+    showToast('Estudo Biomédico instalado neste computador.');
+  });
+  document.getElementById('share-button').addEventListener('click', async () => {
+    const url = new URL('./', window.location.href).href;
+    shareUrlInput.value = url;
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: 'Estudo Biomédico',
+          text: 'Abra este simulador no Samsung Android e escolha “Instalar aplicativo” ou “Adicionar à tela inicial” no menu do navegador.',
+          url
+        });
+        return;
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        console.error('Não foi possível abrir o compartilhamento do dispositivo:', error);
+      }
+    }
+    shareDialog.showModal();
+  });
+  document.getElementById('copy-share-url').addEventListener('click', async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrlInput.value);
+      } else {
+        shareUrlInput.focus();
+        shareUrlInput.select();
+        if (!document.execCommand('copy')) throw new Error('O navegador não conseguiu copiar o link.');
+      }
+      showToast('Link copiado. Envie-o ao celular Samsung e abra no Chrome ou Samsung Internet.');
+    } catch (error) {
+      console.error('Não foi possível copiar o link do simulador:', error);
+      shareUrlInput.focus();
+      shareUrlInput.select();
+      showToast('Link selecionado. Copie com Ctrl+C e envie ao celular Samsung.');
+    }
+  });
+  if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+        .catch(error => console.error('Falha ao registrar o suporte offline do aplicativo:', error));
+    });
+  }
+  document.getElementById('shortcuts-button').addEventListener('click', () => showToast('WASD/joystick: navegar ou patrulhar · ative as vias em qualquer ordem · escolha PNG/JPEG para exportar.'));
+  document.getElementById('info-close').addEventListener('click', () => document.querySelector('.info-panel').classList.remove('open'));
+
+  const joystick = document.getElementById('joystick');
+  const knob = document.getElementById('joystick-knob');
+  let activePointer = null;
+  function updateJoystick(event) {
+    const rect = joystick.getBoundingClientRect();
+    const radius = rect.width * .31;
+    const dx = event.clientX - (rect.left + rect.width / 2);
+    const dy = event.clientY - (rect.top + rect.height / 2);
+    const length = Math.hypot(dx, dy) || 1;
+    const factor = Math.min(1, radius / length);
+    const x = dx * factor;
+    const y = dy * factor;
+    knob.style.left = `calc(50% + ${x}px)`;
+    knob.style.top = `calc(50% + ${y}px)`;
+    state.joy.x = x / radius;
+    state.joy.y = y / radius;
+  }
+  joystick.addEventListener('pointerdown', (event) => {
+    if (activePointer !== null) return;
+    event.preventDefault();
+    activePointer = event.pointerId;
+    joystick.classList.add('active');
+    updateJoystick(event);
+  });
+  window.addEventListener('pointermove', (event) => {
+    if (event.pointerId === activePointer) updateJoystick(event);
+  }, { passive: false });
+  function releaseJoystick(event) {
+    if (event.pointerId !== activePointer) return;
+    activePointer = null;
+    state.joy.x = 0; state.joy.y = 0;
+    knob.style.left = '50%'; knob.style.top = '50%';
+    joystick.classList.remove('active');
+  }
+  window.addEventListener('pointerup', releaseJoystick);
+  window.addEventListener('pointercancel', releaseJoystick);
+
+  let previousFrameTime = 0;
+  function animate(time) {
+    const deltaTime = previousFrameTime ? Math.min(.05, (time - previousFrameTime) / 1000) : .016;
+    previousFrameTime = time;
+    if (!state.paused) {
+      let x = state.joy.x, y = state.joy.y;
+      if (state.keys.has('left')) x -= 1;
+      if (state.keys.has('right')) x += 1;
+      if (state.keys.has('up')) y -= 1;
+      if (state.keys.has('down')) y += 1;
+      const inputMagnitude = Math.hypot(x, y);
+      if (inputMagnitude > 1) {
+        x /= inputMagnitude;
+        y /= inputMagnitude;
+      }
+      const ease = 1 - Math.exp(-deltaTime * 12);
+      state.navVelocity.x += (x - state.navVelocity.x) * ease;
+      state.navVelocity.y += (y - state.navVelocity.y) * ease;
+      if (Math.hypot(state.navVelocity.x, state.navVelocity.y) < .008 && !x && !y) {
+        state.navVelocity.x = 0;
+        state.navVelocity.y = 0;
+      }
+      if (state.patrol.active) {
+        if (updatePatrol(deltaTime, state.navVelocity.x, state.navVelocity.y)) {
+          drawScene();
+          drawMinimap();
+        }
+      } else if (state.navVelocity.x || state.navVelocity.y) {
+        state.camera.x += state.navVelocity.x * deltaTime * 93;
+        state.camera.y += state.navVelocity.y * deltaTime * 93;
+        state.camera.x = Math.max(-180, Math.min(180, state.camera.x));
+        state.camera.y = Math.max(-100, Math.min(100, state.camera.y));
+        drawScene(); drawMinimap();
+      }
+      renderOverlay(time);
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+})();
