@@ -1408,6 +1408,259 @@
     drawScene();
     showToast('Plasmócito recrutado: anticorpos podem recrutar complemento no modelo didático.');
   }
+  function renderPlayerControls(container, compact) {
+    const patrol = state.patrol;
+    const online = window.onlinePlay && window.onlinePlay.isConnected();
+    const labels = ['Jogador 1', 'Jogador 2', 'Jogador 3'];
+    const roles = patrol.playerRoles || ['Macrófago', 'Neutrófilo', 'Lin. B'];
+    container.innerHTML = Array.from({ length: 3 }, (_, index) => {
+      const available = index < patrol.playerCount;
+      const nextPlayer = index === patrol.playerCount;
+      const active = available && index === patrol.activePlayer;
+      const disabled = online || (!available && !nextPlayer);
+      const label = available ? labels[index] : nextPlayer ? `Adicionar ${labels[index]}` : `${labels[index]} indisponível`;
+      return `<button type="button" class="player-control${active ? ' active' : ''}${available ? '' : ' vacant'}${compact ? ' compact' : ''}"
+        data-player-index="${index}" ${nextPlayer && !online ? 'data-add-player="true"' : ''} ${disabled ? 'disabled' : ''}
+        aria-pressed="${active}" aria-label="${label}: ${roles[index]}${active ? ', controle ativo' : ''}"
+        title="${online ? `Papel online: ${roles[index]}` : available ? `Assumir controle: ${roles[index]}` : nextPlayer ? `Adicionar ${labels[index]}: ${roles[index]}` : `Adicione ${labels[index - 1]} primeiro`}">
+        <b>${available ? compact ? `J${index + 1}` : labels[index] : '+'}</b>
+        <small>${available ? roles[index] : compact ? `J${index + 1}` : nextPlayer && !online ? 'Adicionar jogador' : 'Aguardando'}</small>
+      </button>`;
+    }).join('');
+  }
+  function selectPlayer(index, addPlayer) {
+    const patrol = state.patrol;
+    if (!Number.isInteger(index) || index < 0 || index >= 3) return;
+    if (window.onlinePlay && window.onlinePlay.isConnected()) {
+      showToast(`Seu papel online é ${patrol.playerRoles[window.onlinePlay.getLocalSlot()] || 'espectador'}.`);
+      return;
+    }
+    if (addPlayer && index === patrol.playerCount) {
+      patrol.playerCount++;
+      if (index === 1 && patrol.neutrophils.length === 0) spawnNeutrophil();
+      if (index === 2 && patrol.bCells.length === 0) patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+      showToast(`${patrol.playerRoles[index]} associado ao jogador ${index + 1}.`);
+    } else if (index < patrol.playerCount) {
+      showToast(`Controle transferido para ${patrol.playerRoles[index]}.`);
+    } else {
+      return;
+    }
+    patrol.activePlayer = index;
+    updateSimulationUi();
+    drawScene();
+    drawMinimap();
+  }
+  function handlePlayerControl(event) {
+    const control = event.target.closest('[data-player-index]');
+    if (control) selectPlayer(Number(control.dataset.playerIndex), control.dataset.addPlayer === 'true');
+  }
+  function runOnlineAction(command, action) {
+    if (!window.onlinePlay || !window.onlinePlay.isConnected() || window.onlinePlay.isHost()) {
+      action();
+      return;
+    }
+    if (window.onlinePlay.getLocalSlot() < 1) {
+      showToast('Aguardando uma vaga de jogador na sala.');
+      return;
+    }
+    window.onlinePlay.sendCommand(command);
+    showToast('Comando enviado ao anfitrião da partida.');
+  }
+  function applyOnlineCommand(message) {
+    if (!window.onlinePlay || !window.onlinePlay.isHost() || !message
+      || !Number.isInteger(message.slot) || message.slot < 1 || message.slot > 2
+      || !message.command || typeof message.command.type !== 'string') return;
+    const command = message.command;
+    switch (command.type) {
+      case 'patrol-toggle': startOrPausePatrol(); break;
+      case 'multiply': expandMacrophageTeam(); break;
+      case 'recruit-neutrophils': recruitNeutrophils(); break;
+      case 'recruit-plasma': recruitPlasmaCells(); break;
+      case 'restart-infection': restartAfterMacrophageLysis(); break;
+      case 'pathway-toggle':
+        if (Number.isInteger(command.index) && command.index >= 0 && command.index < pathwayLabels.length) togglePathwayModule(command.index);
+        break;
+      case 'defense-toggle':
+        if (Number.isInteger(command.index) && command.index >= 0 && command.index < state.patrol.defenses.length) toggleMacrophageDefense(command.index);
+        break;
+      case 'cytokine-toggle':
+        if (Number.isInteger(command.index) && command.index >= 0 && command.index < state.patrol.cytokines.length) toggleCytokine(command.index);
+        break;
+      case 'phage-toggle': togglePhageTherapy(); break;
+      case 'infection-view':
+        if (typeof command.view === 'string') selectInfectionView(command.view);
+        break;
+    }
+  }
+  function applyOnlineRoster(roster) {
+    if (!roster || !Number.isInteger(roster.count)) return;
+    const patrol = state.patrol;
+    const count = Math.max(1, Math.min(3, roster.count));
+    if (window.onlinePlay && window.onlinePlay.isHost()) {
+      if (count >= 2 && patrol.neutrophils.length === 0) spawnNeutrophil();
+      if (count >= 3 && patrol.bCells.length === 0) patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+      patrol.playerCount = count;
+      patrol.activePlayer = 0;
+    } else if (window.onlinePlay && window.onlinePlay.isConnected()) {
+      patrol.playerCount = count;
+      patrol.activePlayer = Math.max(0, window.onlinePlay.getLocalSlot());
+    }
+    updateSimulationUi();
+    if (patrol.active) {
+      drawScene();
+      drawMinimap();
+    }
+    const members = Array.isArray(roster.members) ? roster.members : [];
+    document.getElementById('online-roster').textContent = members
+      .map(member => `J${member.slot + 1} ${patrol.playerRoles[member.slot]}${member.isHost ? ' · anfitrião' : ''}`)
+      .join('  ·  ');
+  }
+  let onlineSessionActive = false;
+  function renderOnlineStatus(detail) {
+      const status = document.getElementById('online-connection-status');
+      const summary = document.getElementById('online-summary');
+      const connectedControls = document.getElementById('online-connected-controls');
+      const disconnectedControls = document.getElementById('online-disconnected-controls');
+      const connected = window.onlinePlay && window.onlinePlay.isConnected();
+      const roomCode = detail && detail.roomCode ? detail.roomCode : window.onlinePlay.getRoomCode();
+      const slot = detail && Number.isInteger(detail.slot) ? detail.slot : window.onlinePlay.getLocalSlot();
+      const role = state.patrol.playerRoles[slot] || 'aguardando vaga';
+      const messages = {
+        offline: 'Crie uma sala ou entre com o código enviado por quem está hospedando.',
+        connecting: 'Conectando à sala online…',
+        'loading-sdk': 'Carregando o serviço de conexão…',
+        waiting: 'Conectado. Aguardando a entrada do anfitrião…',
+        connected: `Conectado como J${slot + 1} · ${role}.`,
+        full: 'A sala está cheia; no máximo três jogadores podem participar.',
+        'host-left': 'O anfitrião saiu ou perdeu a conexão. A partida ficará pausada.',
+        error: detail && detail.message ? detail.message : 'Não foi possível conectar à sala.'
+      };
+      const message = messages[detail && detail.state] || messages.offline;
+      status.textContent = message;
+      summary.textContent = connected
+        ? `Sala ${roomCode} · ${slot >= 0 ? `J${slot + 1} ${role}` : 'aguardando vaga'}`
+        : 'Jogue com amigos em outros dispositivos.';
+      document.querySelector('.coop-hint').textContent = connected
+        ? 'Cada dispositivo controla seu papel; a simulação é sincronizada pelo anfitrião.'
+        : 'Até 3 pessoas no mesmo dispositivo: toque no jogador para assumir seu papel.';
+      connectedControls.hidden = !connected;
+      disconnectedControls.hidden = connected;
+      document.getElementById('online-play-button').textContent = connected ? `Sala ${roomCode}` : 'Conectar';
+      if (connected) {
+        onlineSessionActive = true;
+      } else if (detail && detail.state === 'offline' && onlineSessionActive) {
+        onlineSessionActive = false;
+        state.patrol.playerCount = 1;
+        state.patrol.activePlayer = 0;
+        updateSimulationUi();
+      }
+    }
+    function configureOnlineUi() {
+      const dialog = document.getElementById('online-play-dialog');
+      const roomInput = document.getElementById('online-room-code');
+      const copyInput = document.getElementById('online-room-link');
+      const setError = error => {
+        console.error('Não foi possível conectar ao modo cooperativo online:', error);
+        renderOnlineStatus({ state: 'error', message: error.message || 'Falha ao conectar.' });
+      };
+      document.getElementById('online-play-button').addEventListener('click', () => dialog.showModal());
+      roomInput.addEventListener('input', () => { roomInput.value = roomInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); });
+      document.getElementById('online-create-room').addEventListener('click', async event => {
+        event.currentTarget.disabled = true;
+        try {
+          const code = await window.onlinePlay.createRoom();
+          document.getElementById('online-current-code').textContent = code;
+          const invite = new URL(window.location.href);
+          invite.searchParams.set('room', code);
+          copyInput.value = invite.href;
+        } catch (error) {
+          await window.onlinePlay.leave();
+          setError(error);
+        } finally {
+          event.currentTarget.disabled = false;
+        }
+      });
+      document.getElementById('online-join-room').addEventListener('click', async event => {
+        event.currentTarget.disabled = true;
+        try {
+          const code = await window.onlinePlay.joinRoom(roomInput.value);
+          document.getElementById('online-current-code').textContent = code;
+          const invite = new URL(window.location.href);
+          invite.searchParams.set('room', code);
+          copyInput.value = invite.href;
+        } catch (error) {
+          await window.onlinePlay.leave();
+          setError(error);
+        } finally {
+          event.currentTarget.disabled = false;
+        }
+      });
+      document.getElementById('online-copy-link').addEventListener('click', async () => {
+        try {
+          if (!copyInput.value) throw new Error('O link da sala ainda não está disponível.');
+          if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(copyInput.value);
+          else {
+            copyInput.focus();
+            copyInput.select();
+            if (!document.execCommand('copy')) throw new Error('O navegador não conseguiu copiar o link.');
+          }
+          showToast('Link da sala copiado. Envie-o aos seus amigos.');
+        } catch (error) {
+          setError(error);
+          copyInput.focus();
+          copyInput.select();
+        }
+      });
+      document.getElementById('online-leave-room').addEventListener('click', async () => {
+        await window.onlinePlay.leave();
+        dialog.close();
+        showToast('Você saiu da sala online.');
+      });
+      const invitedRoom = new URLSearchParams(window.location.search).get('room');
+      if (invitedRoom && /^[A-Za-z0-9]{6}$/.test(invitedRoom)) {
+        roomInput.value = invitedRoom.toUpperCase();
+        dialog.showModal();
+    }
+    }
+  let lastOnlineUiUpdate = 0;
+  function applyOnlineSnapshot(snapshot) {
+    if (!window.onlinePlay || window.onlinePlay.isHost() || window.onlinePlay.getLocalSlot() < 1
+      || !snapshot || typeof snapshot !== 'object' || !snapshot.patrol || typeof snapshot.patrol !== 'object'
+      || !Array.isArray(snapshot.pathwayActive) || snapshot.pathwayActive.length !== pathwayLabels.length
+      || snapshot.pathwayActive.some(value => typeof value !== 'boolean')) return;
+    const source = snapshot.patrol;
+    const arrayKeys = ['bacteria', 'phagosomes', 'macrophages', 'granulomas', 'defenseUnits', 'helperT',
+      'bCells', 'neutrophils', 'plasmaCells', 'antibodies', 'complement', 'nets', 'deaths', 'spreadSites',
+      'cytokines', 'defenses'];
+    if (arrayKeys.some(key => !Array.isArray(source[key]) || source[key].length > 1000)
+      || typeof source.active !== 'boolean' || typeof source.running !== 'boolean'
+      || !Number.isInteger(source.playerCount) || source.playerCount < 1 || source.playerCount > 3) return;
+    const wasActive = state.patrol.active;
+    const previousView = state.patrol.infectionView;
+    const safeState = {};
+    Object.keys(state.patrol).forEach(key => {
+      if (Object.prototype.hasOwnProperty.call(source, key)) safeState[key] = source[key];
+    });
+    Object.assign(state.patrol, safeState);
+    state.pathwayActive = snapshot.pathwayActive.slice();
+    state.patrol.activePlayer = Math.max(0, window.onlinePlay.getLocalSlot());
+    if (state.patrol.active && !wasActive) {
+      state.level = 3;
+      state.topic = 'scene';
+      state.camera = { x: 0, y: 0 };
+    }
+    if ((state.patrol.active && !wasActive) || previousView !== state.patrol.infectionView) {
+      renderInfo();
+    }
+    renderPathwayControls();
+    const now = performance.now();
+    if (now - lastOnlineUiUpdate > 400) {
+      updateSimulationUi();
+      lastOnlineUiUpdate = now;
+    }
+    drawScene();
+    drawMinimap();
+  }
   function getFocusProgress() {
     const contained = state.patrol.phagosomes.find(item => item.location !== 'cytosol');
     return contained ? contained.progress : state.patrol.complete ? 4 : 0;
@@ -1495,15 +1748,8 @@
     document.getElementById('simulation-count').textContent = `${patrol.cleared} / ${initialBacteriaCount}`;
     document.getElementById('clearance-progress').style.width = `${patrol.cleared / initialBacteriaCount * 100}%`;
     document.getElementById('coop-count').textContent = `${patrol.playerCount}/3 jogadores`;
-    const playerLabels = ['Jogador 1', 'Jogador 2', 'Jogador 3'];
-    const playerRoles = patrol.playerRoles || ['Macrófago', 'Neutrófilo', 'Lin. B'];
-    document.getElementById('player-controls').innerHTML = Array.from({ length: 3 }, (_, index) => {
-      const available = index < patrol.playerCount;
-      return `<button type="button" class="player-control${available && index === patrol.activePlayer ? ' active' : ''}${available ? '' : ' vacant'}"
-        data-player-index="${index}" ${available ? '' : 'data-add-player="true"'} aria-pressed="${available && index === patrol.activePlayer}">
-        <b>${available ? playerLabels[index] : '+'}</b><small>${available ? playerRoles[index] : 'Adicionar jogador'}</small>
-      </button>`;
-    }).join('');
+    renderPlayerControls(document.getElementById('player-controls'), false);
+    renderPlayerControls(document.getElementById('hud-player-controls'), true);
     const cytokineActive = patrol.cytokines.filter(item => item.active).length;
     document.getElementById('cytokine-count').textContent = `${cytokineActive}/5`;
     document.getElementById('cytokine-controls').innerHTML = patrol.cytokines.map((item, index) =>
@@ -1546,7 +1792,7 @@
     document.getElementById('patrol-hud').hidden = !patrol.active;
     document.getElementById('sterilization-banner').hidden = !(patrol.complete && patrol.active);
     const controlledRole = patrol.playerRoles ? patrol.playerRoles[patrol.activePlayer] : 'Macrófago';
-    document.getElementById('joystick-hint').textContent = patrol.active ? `JOGADOR ${patrol.activePlayer + 1} · ${controlledRole.toUpperString?.() || controlledRole.toUpperCase()}` : 'MOVER CÂMERA';
+    document.getElementById('joystick-hint').textContent = patrol.active ? `J${patrol.activePlayer + 1} · ${controlledRole.toUpperCase()}` : 'MOVER CÂMERA';
     document.querySelector('.viewer-stage').classList.toggle('patrol-active', patrol.active);
     const phageButton = document.getElementById('phage-therapy-button');
     phageButton.setAttribute('aria-pressed', String(patrol.phageTherapy));
@@ -1607,6 +1853,8 @@
       return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, progress: 0 };
     });
     state.patrol.macrophages = [{ x: 0, y: 0, phase: 0, damage: 0, alive: true, founder: true }];
+    if (state.patrol.playerCount >= 2) spawnNeutrophil();
+    if (state.patrol.playerCount >= 3) state.patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
   }
   function startOrPausePatrol() {
     if (state.patrol.running) {
@@ -1678,6 +1926,23 @@
     drawScene();
     showToast(`${module.name} ${module.active ? 'destacada' : 'desativada'} no modelo conceitual.`);
   }
+  function toggleCytokine(index) {
+    const cytokine = state.patrol.cytokines[index];
+    if (!cytokine) return;
+    cytokine.active = !cytokine.active;
+    if (cytokine.active) {
+      if (cytokine.name === 'IL-12' && state.patrol.bCells.length === 0) {
+        state.patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
+      }
+      if (cytokine.name === 'CXCL8' && state.patrol.neutrophils.length === 0) {
+        spawnNeutrophil();
+      }
+      if (state.patrol.helperT.length === 0) state.patrol.helperT.push({ x: -.18, y: -.12, phase: 0 });
+    }
+    updateSimulationUi();
+    drawScene();
+    showToast(`${cytokine.name} ${cytokine.active ? 'ativada' : 'desativada'} no modelo didático.`);
+  }
   function togglePhageTherapy() {
     state.patrol.phageTherapy = !state.patrol.phageTherapy;
     updateSimulationUi();
@@ -1699,10 +1964,11 @@
     const patrol = state.patrol;
     if (!patrol.running) return false;
     let changed = false;
-    const magnitude = Math.hypot(directionX, directionY);
-    if (magnitude > 0) {
-      const xStep = directionX / magnitude * deltaTime * .36;
-      const yStep = directionY / magnitude * deltaTime * .36;
+    const movePlayer = (player, x, y) => {
+      const magnitude = Math.hypot(x, y);
+      if (!magnitude) return false;
+      const xStep = x / magnitude * deltaTime * .36;
+      const yStep = y / magnitude * deltaTime * .36;
       const constrain = (unit) => {
         unit.x += xStep;
         unit.y += yStep;
@@ -1712,13 +1978,21 @@
           unit.y *= .31 / distance;
         }
       };
-      if (patrol.activePlayer === 0) patrol.macrophages.filter(unit => unit.alive).forEach(constrain);
-      else if (patrol.activePlayer === 1) patrol.neutrophils.forEach(constrain);
+      if (player === 0) patrol.macrophages.filter(unit => unit.alive).forEach(constrain);
+      else if (player === 1) patrol.neutrophils.forEach(constrain);
       else {
         patrol.bCells.forEach(constrain);
         patrol.plasmaCells.forEach(constrain);
       }
-      changed = true;
+      return true;
+    };
+    if (window.onlinePlay && window.onlinePlay.isHost()) {
+      changed = movePlayer(0, directionX, directionY);
+      window.onlinePlay.getRemoteInputs().forEach(input => {
+        changed = movePlayer(input.slot, input.x, input.y) || changed;
+      });
+    } else {
+      changed = movePlayer(patrol.activePlayer, directionX, directionY);
     }
     if (getLiveMacrophageCount() || patrol.neutrophils.length || patrol.helperT.length
       || patrol.bCells.length || patrol.plasmaCells.length) {
@@ -2074,7 +2348,8 @@
   }
 
   function setLevel(value) {
-    if (state.patrol.active) {
+    const remoteGuest = window.onlinePlay && window.onlinePlay.isConnected() && !window.onlinePlay.isHost();
+    if (state.patrol.active && !remoteGuest) {
       state.patrol.active = false;
       state.patrol.running = false;
     }
@@ -2183,63 +2458,56 @@
     document.querySelector('.tool-dot').style.background = state.particles ? 'var(--mint)' : '#76868a';
     showToast(state.particles ? 'Partículas reativadas.' : 'Partículas pausadas.');
   });
-  document.getElementById('patrol-button').addEventListener('click', startOrPausePatrol);
-  document.getElementById('patrol-launch-button').addEventListener('click', startOrPausePatrol);
-  document.getElementById('multiply-button').addEventListener('click', expandMacrophageTeam);
-  document.getElementById('recruit-neutrophils-button').addEventListener('click', recruitNeutrophils);
-  document.getElementById('recruit-plasma-button').addEventListener('click', recruitPlasmaCells);
-  document.getElementById('restart-infection-button').addEventListener('click', restartAfterMacrophageLysis);
-  document.getElementById('player-controls').addEventListener('click', (event) => {
-    const control = event.target.closest('[data-player-index]');
-    if (!control) return;
-    const index = Number(control.dataset.playerIndex);
-    if (control.dataset.addPlayer === 'true') {
-      if (index + 1 > state.patrol.playerCount) state.patrol.playerCount = index + 1;
-      state.patrol.activePlayer = index;
-      if (state.patrol.playerCount >= 2 && state.patrol.neutrophils.length === 0) {
-        spawnNeutrophil();
-      }
-      if (state.patrol.playerCount >= 3 && state.patrol.bCells.length === 0) {
-        state.patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
-      }
-      showToast(`${state.patrol.playerRoles[index]} associado ao jogador ${index + 1}.`);
-    } else {
-      state.patrol.activePlayer = index;
-      showToast(`Controle transferido para ${state.patrol.playerRoles[index]}.`);
-    }
-    updateSimulationUi();
+  document.getElementById('patrol-button').addEventListener('click', () => runOnlineAction({ type: 'patrol-toggle' }, startOrPausePatrol));
+  document.getElementById('patrol-launch-button').addEventListener('click', () => runOnlineAction({ type: 'patrol-toggle' }, startOrPausePatrol));
+  document.getElementById('multiply-button').addEventListener('click', () => runOnlineAction({ type: 'multiply' }, expandMacrophageTeam));
+  document.getElementById('recruit-neutrophils-button').addEventListener('click', () => runOnlineAction({ type: 'recruit-neutrophils' }, recruitNeutrophils));
+  document.getElementById('recruit-plasma-button').addEventListener('click', () => runOnlineAction({ type: 'recruit-plasma' }, recruitPlasmaCells));
+  document.getElementById('restart-infection-button').addEventListener('click', () => runOnlineAction({ type: 'restart-infection' }, restartAfterMacrophageLysis));
+  document.getElementById('player-controls').addEventListener('click', handlePlayerControl);
+  document.getElementById('hud-player-controls').addEventListener('click', handlePlayerControl);
+  window.onlinePlay.setHandlers({
+    snapshot: applyOnlineSnapshot,
+    command: applyOnlineCommand,
+    roster: applyOnlineRoster,
+    status: renderOnlineStatus
   });
+  configureOnlineUi();
+  window.setInterval(() => {
+    if (window.onlinePlay.isHost() && state.patrol.active) {
+      window.onlinePlay.sendSnapshot({
+        patrol: state.patrol,
+        pathwayActive: state.pathwayActive
+      });
+    }
+  }, 100);
   document.getElementById('cytokine-controls').addEventListener('click', (event) => {
     const control = event.target.closest('[data-cytokine-index]');
     if (!control) return;
     const index = Number(control.dataset.cytokineIndex);
-    const cytokine = state.patrol.cytokines[index];
-    cytokine.active = !cytokine.active;
-    if (cytokine.active) {
-      if (cytokine.name === 'IL-12' && state.patrol.bCells.length === 0) {
-        state.patrol.bCells.push({ x: -.16, y: .16, phase: 0 });
-      }
-      if (cytokine.name === 'CXCL8' && state.patrol.neutrophils.length === 0) {
-        spawnNeutrophil();
-      }
-      if (state.patrol.helperT.length === 0) state.patrol.helperT.push({ x: -.18, y: -.12, phase: 0 });
-    }
-    updateSimulationUi();
-    drawScene();
-    showToast(`${cytokine.name} ${cytokine.active ? 'ativada' : 'desativada'} no modelo didático.`);
+    runOnlineAction({ type: 'cytokine-toggle', index }, () => toggleCytokine(index));
   });
   document.getElementById('arsenal-controls').addEventListener('click', (event) => {
     const control = event.target.closest('[data-defense-index]');
-    if (control) toggleMacrophageDefense(Number(control.dataset.defenseIndex));
+    if (control) {
+      const index = Number(control.dataset.defenseIndex);
+      runOnlineAction({ type: 'defense-toggle', index }, () => toggleMacrophageDefense(index));
+    }
   });
-  document.getElementById('phage-therapy-button').addEventListener('click', togglePhageTherapy);
+  document.getElementById('phage-therapy-button').addEventListener('click', () => runOnlineAction({ type: 'phage-toggle' }, togglePhageTherapy));
   document.getElementById('infection-view-tabs').addEventListener('click', (event) => {
     const button = event.target.closest('[data-infection-view]');
-    if (button) selectInfectionView(button.dataset.infectionView);
+    if (button) {
+      const view = button.dataset.infectionView;
+      runOnlineAction({ type: 'infection-view', view }, () => selectInfectionView(view));
+    }
   });
   document.getElementById('pathway-controls').addEventListener('click', (event) => {
     const control = event.target.closest('[data-pathway-index]');
-    if (control) togglePathwayModule(Number(control.dataset.pathwayIndex));
+    if (control) {
+      const index = Number(control.dataset.pathwayIndex);
+      runOnlineAction({ type: 'pathway-toggle', index }, () => togglePathwayModule(index));
+    }
   });
   document.getElementById('export-button').addEventListener('click', (event) => {
     event.stopPropagation();
@@ -2433,7 +2701,10 @@
         state.navVelocity.y = 0;
       }
       if (state.patrol.active) {
-        if (updatePatrol(deltaTime, state.navVelocity.x, state.navVelocity.y)) {
+        const remoteGuest = window.onlinePlay && window.onlinePlay.isConnected() && !window.onlinePlay.isHost();
+        if (remoteGuest && state.patrol.running) {
+          window.onlinePlay.sendInput(state.navVelocity.x, state.navVelocity.y);
+        } else if (updatePatrol(deltaTime, state.navVelocity.x, state.navVelocity.y)) {
           drawScene();
           drawMinimap();
         }

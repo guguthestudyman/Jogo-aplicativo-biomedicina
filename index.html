@@ -73,6 +73,10 @@
           <div class="scene-badge"><span></span> VISUALIZAÇÃO CONCEITUAL</div>
           <div class="patrol-hud" id="patrol-hud" hidden>
             <span>PATRULHA ALVEOLAR · CENÁRIO DIDÁTICO</span>
+            <div class="hud-team-switcher">
+              <span>CONTROLE DA EQUIPE</span>
+              <div class="player-controls hud-player-controls" id="hud-player-controls"></div>
+            </div>
             <strong><b id="patrol-bacteria-count">0</b> <span id="patrol-bacteria-label">bacilos no modelo</span></strong>
             <small><span id="extracellular-count">18</span> livres · <span id="phagosome-count">0</span> em fagossomos</small>
             <small><span id="intracellular-count">0</span> no citosol · <span id="granuloma-count">0</span> granulomas</small>
@@ -150,7 +154,12 @@
                 <button class="simulation-restart" id="restart-infection-button" hidden>↻ Reiniciar infecção</button>
               </div>
               <div class="coop-panel">
-                <div class="coop-heading"><span>DEFESA COOPERATIVA · até 3 pessoas</span><span id="coop-count">1/3 jogadores</span></div>
+                <div class="coop-heading"><span>CONTROLE DA EQUIPE</span><span id="coop-count">1/3 jogadores</span></div>
+                <div class="online-play-entry">
+                  <span><b>Cooperativo online</b><small id="online-summary">Jogue com amigos em outros dispositivos.</small></span>
+                  <button type="button" id="online-play-button">Conectar</button>
+                </div>
+                <small class="coop-hint">Até 3 pessoas no mesmo dispositivo: toque no jogador para assumir seu papel.</small>
                 <div class="player-controls" id="player-controls"></div>
                 <small id="helper-status">T helper: recrutamento automático pela sinalização didática</small>
               </div>
@@ -241,7 +250,33 @@
     <p id="install-help-text"></p>
     <button class="dialog-primary" id="install-help-close" type="button">Entendi</button>
   </dialog>
+  <dialog class="app-dialog online-dialog" id="online-play-dialog" aria-labelledby="online-play-title">
+    <form method="dialog"><button class="dialog-close" aria-label="Fechar">×</button></form>
+    <span class="dialog-kicker">COOPERATIVO EM TEMPO REAL</span>
+    <h2 id="online-play-title">Jogar online</h2>
+    <p id="online-connection-status" role="status">Crie uma sala ou entre com o código enviado por quem está hospedando.</p>
+    <div id="online-disconnected-controls">
+      <button class="dialog-primary online-create-button" id="online-create-room" type="button">Criar sala e convidar</button>
+      <label class="online-room-label" for="online-room-code">Código da sala</label>
+      <div class="share-link-row">
+        <input id="online-room-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123" aria-label="Código da sala">
+        <button id="online-join-room" type="button">Entrar</button>
+      </div>
+    </div>
+    <div id="online-connected-controls" hidden>
+      <label class="online-room-label" for="online-room-link">Link de convite · sala <b id="online-current-code"></b></label>
+      <div class="share-link-row">
+        <input id="online-room-link" type="url" readonly aria-label="Link de convite da sala">
+        <button id="online-copy-link" type="button">Copiar</button>
+      </div>
+      <div class="online-roster" id="online-roster"></div>
+      <button class="online-leave-button" id="online-leave-room" type="button">Sair da sala</button>
+    </div>
+    <small class="dialog-note">A sala conecta até três jogadores. O anfitrião mantém a simulação em execução. Use apenas em dispositivos conectados à internet.</small>
+  </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="multiplayer-config.js"></script>
+  <script src="online-play.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

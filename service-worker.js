@@ -1,10 +1,12 @@
 'use strict';
 
-const CACHE_NAME = 'estudo-biomedico-v7';
+const CACHE_NAME = 'estudo-biomedico-v10';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
+  './multiplayer-config.js',
+  './online-play.js',
   './app.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
