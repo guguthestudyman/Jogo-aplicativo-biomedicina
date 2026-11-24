@@ -1559,6 +1559,15 @@
       const dialog = document.getElementById('online-play-dialog');
       const roomInput = document.getElementById('online-room-code');
       const copyInput = document.getElementById('online-room-link');
+      const createInviteLink = code => {
+        const config = window.ESTUDO_MULTIPLAYER_CONFIG || {};
+        const publicUrl = typeof config.publicAppUrl === 'string' ? config.publicAppUrl.trim() : '';
+        const invite = new URL(publicUrl || window.location.href);
+        invite.search = '';
+        invite.hash = '';
+        invite.searchParams.set('room', code);
+        return invite.href;
+      };
       const setError = error => {
         console.error('Não foi possível conectar ao modo cooperativo online:', error);
         renderOnlineStatus({ state: 'error', message: error.message || 'Falha ao conectar.' });
@@ -1570,9 +1579,7 @@
         try {
           const code = await window.onlinePlay.createRoom();
           document.getElementById('online-current-code').textContent = code;
-          const invite = new URL(window.location.href);
-          invite.searchParams.set('room', code);
-          copyInput.value = invite.href;
+          copyInput.value = createInviteLink(code);
         } catch (error) {
           await window.onlinePlay.leave();
           setError(error);
@@ -1585,9 +1592,7 @@
         try {
           const code = await window.onlinePlay.joinRoom(roomInput.value);
           document.getElementById('online-current-code').textContent = code;
-          const invite = new URL(window.location.href);
-          invite.searchParams.set('room', code);
-          copyInput.value = invite.href;
+          copyInput.value = createInviteLink(code);
         } catch (error) {
           await window.onlinePlay.leave();
           setError(error);
